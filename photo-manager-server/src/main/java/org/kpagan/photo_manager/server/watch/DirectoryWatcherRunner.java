@@ -1,5 +1,6 @@
 package org.kpagan.photo_manager.server.watch;
 
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +21,9 @@ public class DirectoryWatcherRunner implements ApplicationRunner {
     private final ApplicationEventPublisher publisher;
     private final SimpleAsyncTaskExecutor simpleAsyncTaskExecutor;
 
-    public DirectoryWatcherRunner(@Value("${photo.config.watchingDirectories}") List<String> watchingDirectories,
+    private DirectoryWatcher watcher;
+
+    public DirectoryWatcherRunner(@Value("${photo.config.directories}") List<String> watchingDirectories,
                                   ApplicationEventPublisher publisher) {
         this.watchingDirectories = watchingDirectories;
         this.publisher = publisher;
@@ -35,13 +38,25 @@ public class DirectoryWatcherRunner implements ApplicationRunner {
         }
 
         try {
-            DirectoryWatcher watcher = new DirectoryWatcher(publisher);
+            watcher = new DirectoryWatcher(publisher);
             log.info("Watching directory: {}", watchingDirectories);
             watcher.registerPaths(watchingDirectories);
             simpleAsyncTaskExecutor.execute(watcher);
             log.info("Directory Watcher initialized...");
         } catch (Exception e) {
             log.error("Failure initializing DirectoryWatcher", e);
+        }
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        log.info("Closing DirectoryWatcher service");
+        try {
+            if (watcher != null) {
+                watcher.close();
+            }
+        } catch (Exception e) {
+            log.error("Failed to close DirectoryWatcher", e);
         }
     }
 }

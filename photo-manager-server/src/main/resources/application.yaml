@@ -17,5 +17,5 @@ spring:
 
 photo:
   config:
-    watchingDirectories: ${WATCH_DIRS}
+    directories: ${PHOTO_DIRS}
     allowedExtensions: jpg, jpeg, png, heic, webp, gif
