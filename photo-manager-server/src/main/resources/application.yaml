@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: photo-manager
+  datasource:
+    url: jdbc:h2:file:./photos.db
+    driver-class-name: org.h2.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+  h2:
+    console:
+      enabled: true
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+
+photo:
+  config:
+    watchingDirectories: ${WATCH_DIRS}
+    allowedExtensions: jpg, jpeg, png, heic, webp, gif

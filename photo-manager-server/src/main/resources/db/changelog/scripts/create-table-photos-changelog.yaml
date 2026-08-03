@@ -1,0 +1,94 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-photos-1
+      author: kpagan
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_photos
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: filename
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: absolute_path
+                  type: VARCHAR(512)
+              - column:
+                  name: file_size
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: sha256
+                  type: VARCHAR(255)
+              - column:
+                  name: perceptual_hash
+                  type: BIGINT
+              - column:
+                  name: date_taken
+                  type: DATE
+              - column:
+                  name: time_taken
+                  type: TIME(6)
+              - column:
+                  name: camera_make
+                  type: VARCHAR(255)
+              - column:
+                  name: camera_model
+                  type: VARCHAR(255)
+              - column:
+                  name: width
+                  type: INT
+              - column:
+                  name: height
+                  type: INT
+              - column:
+                  name: latitude
+                  type: DOUBLE
+              - column:
+                  name: longitude
+                  type: DOUBLE
+            tableName: photos
+  - changeSet:
+      id: create-table-photos-2
+      author: kpagan
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addUniqueConstraint:
+            columnNames: absolute_path
+            constraintName: uc_photos_absolutepath
+            tableName: photos
+  - changeSet:
+      id: create-table-photos-3
+      author: kpagan
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: perceptual_hash
+            indexName: idx_perceptual_hash
+            tableName: photos
+  - changeSet:
+      id: create-table-photos-4
+      author: kpagan
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: sha256
+            indexName: idx_sha256
+            tableName: photos
+
