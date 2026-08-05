@@ -45,9 +45,8 @@ public class DirectoryWatcher implements Runnable, AutoCloseable {
     public void registerPaths(List<String> paths) throws IOException {
         for (String dir : paths) {
             Path path = Paths.get(dir);
-            log.info("Scanning {} ...", dir);
+            log.info("Watching {} ...", dir);
             registerAll(path);
-            log.info("Done.");
         }
     }
 
@@ -159,7 +158,7 @@ public class DirectoryWatcher implements Runnable, AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         try {
             if (watchService != null) {
                 watchService.close();

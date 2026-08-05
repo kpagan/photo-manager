@@ -1,4 +1,4 @@
-package org.kpagan.photo_manager.server.imaging.impl;
+package org.kpagan.photo_manager.server.service.imaging.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -7,8 +7,8 @@ import org.kpagan.photo_manager.server.image.persistence.DuplicateImageEntity;
 import org.kpagan.photo_manager.server.image.persistence.DuplicateImageRepository;
 import org.kpagan.photo_manager.server.image.persistence.ImageEntity;
 import org.kpagan.photo_manager.server.image.persistence.ImageRepository;
-import org.kpagan.photo_manager.server.imaging.ImageDatabaseService;
-import org.kpagan.photo_manager.server.imaging.ImageMapper;
+import org.kpagan.photo_manager.server.service.imaging.ImageDatabaseService;
+import org.kpagan.photo_manager.server.service.imaging.ImageMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,17 +56,30 @@ public class ImageDatabaseServiceImpl implements ImageDatabaseService {
 
             if (!exactMatchesIds.isEmpty()) {
                 for (Long exactId : exactMatchesIds) {
-                    duplicates.add(DuplicateImageEntity.create(saved.getId(), exactId, true));
+                    duplicates.add(createDuplicateEntity(saved.getId(), exactId, true));
                 }
             }
             // near duplicate will always be an exact match so there is no reason to add it again
             nearDuplicatesIds.removeAll(exactMatchesIds);
             if (!nearDuplicatesIds.isEmpty()) {
                 for (Long nearDuplicateId : nearDuplicatesIds) {
-                    duplicates.add(DuplicateImageEntity.create(saved.getId(), nearDuplicateId, false));
+                    duplicates.add(createDuplicateEntity(saved.getId(), nearDuplicateId, false));
                 }
             }
             duplicateImageRepository.saveAll(duplicates);
         }
+    }
+
+    /**
+     * Prevent Duplicate Symmetry: (1, 2) and (2, 1) represent the same physical relationship.
+     * If we don't enforce an order constraint (like IMAGE1 < IMAGE2), we end up storing duplicates
+     * of duplicate relationships.
+     */
+    private static DuplicateImageEntity createDuplicateEntity(long newPhotoId, long existingPhotoId, boolean exactMatch) {
+        // Ensure smaller ID is always IMAGE1_ID
+        long id1 = Math.min(newPhotoId, existingPhotoId);
+        long id2 = Math.max(newPhotoId, existingPhotoId);
+
+        return DuplicateImageEntity.create(id1, id2, exactMatch);
     }
 }

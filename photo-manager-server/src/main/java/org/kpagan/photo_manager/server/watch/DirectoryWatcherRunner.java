@@ -27,7 +27,7 @@ public class DirectoryWatcherRunner implements ApplicationRunner {
                                   ApplicationEventPublisher publisher) {
         this.watchingDirectories = watchingDirectories;
         this.publisher = publisher;
-        simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor();
+        simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor("watch-executor");
     }
 
     @Override
@@ -39,10 +39,8 @@ public class DirectoryWatcherRunner implements ApplicationRunner {
 
         try {
             watcher = new DirectoryWatcher(publisher);
-            log.info("Watching directory: {}", watchingDirectories);
             watcher.registerPaths(watchingDirectories);
             simpleAsyncTaskExecutor.execute(watcher);
-            log.info("Directory Watcher initialized...");
         } catch (Exception e) {
             log.error("Failure initializing DirectoryWatcher", e);
         }

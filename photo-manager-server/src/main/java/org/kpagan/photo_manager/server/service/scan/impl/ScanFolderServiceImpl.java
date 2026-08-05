@@ -1,38 +1,36 @@
-package org.kpagan.photo_manager.server.scan;
+package org.kpagan.photo_manager.server.service.scan.impl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.NonNull;
-import org.kpagan.photo_manager.server.imaging.ImageProcessingService;
+import org.kpagan.photo_manager.server.service.imaging.ImageProcessingService;
+import org.kpagan.photo_manager.server.service.scan.ScanFolderService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.util.List;
 
-@Component
+@Service
 @Slf4j
-public class ScanFolderRunner implements ApplicationRunner {
+public class ScanFolderServiceImpl implements ScanFolderService {
 
     private final List<String> scanDirectories;
-    private final SimpleAsyncTaskExecutor simpleAsyncTaskExecutor;
     private final ImageProcessingService imageProcessingService;
+    private final SimpleAsyncTaskExecutor simpleAsyncTaskExecutor;
 
-    public ScanFolderRunner(@Value("${photo.config.directories}") List<String> scanDirectories,
-                            ImageProcessingService imageProcessingService) {
+    public ScanFolderServiceImpl(@Value("${photo.config.directories}") List<String> scanDirectories,
+                                 ImageProcessingService imageProcessingService) {
         this.scanDirectories = scanDirectories;
         this.imageProcessingService = imageProcessingService;
-        this.simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor();
+        this.simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor("scan-executor");
     }
 
     @Override
-    public void run(@NonNull ApplicationArguments args) {
+    public void scan() {
         if (CollectionUtils.isEmpty(scanDirectories)) {
-            log.warn("Watch directory is not configured. Can't watch when new files are added");
-            return;
+            String msg = "Photos directory is not configured. Can't scan for photos";
+            throw new IllegalArgumentException(msg);
         }
 
         for (String dir : scanDirectories) {
@@ -40,7 +38,6 @@ public class ScanFolderRunner implements ApplicationRunner {
                 log.info("Scanning directory: {}", dir);
                 simpleAsyncTaskExecutor.execute(() -> {
                     try {
-                        // TODO: replace this runner by a rest endpoint
                         imageProcessingService.scanImagesUnder(dir);
                     } catch (IOException e) {
                         throw new RuntimeException(e);

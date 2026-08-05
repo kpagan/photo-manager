@@ -1,0 +1,63 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-duplicate_images-1
+      author: kpagan
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  name: exact_match
+                  type: BOOLEAN
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_duplicate_images
+                  name: image1_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_duplicate_images
+                  name: image2_id
+                  type: BIGINT
+            tableName: duplicate_images
+  - changeSet:
+      id: create-table-duplicate_images-2
+      author: kpagan
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            constraintName: FK_DUP_IMAGE_1
+            baseTableName: duplicate_images
+            baseColumnNames: image1_id
+            referencedTableName: photos
+            referencedColumnNames: id
+            onDelete: CASCADE
+  - changeSet:
+      id: create-table-duplicate_images-3
+      author: kpagan
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            constraintName: FK_DUP_IMAGE_2
+            baseTableName: duplicate_images
+            baseColumnNames: image2_id
+            referencedTableName: photos
+            referencedColumnNames: id
+            onDelete: CASCADE
+  - changeSet:
+      id: create-table-duplicate_images-4
+      author: kpagan
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: exact_match
+            indexName: idx_exact_match
+            tableName: duplicate_images
+
+

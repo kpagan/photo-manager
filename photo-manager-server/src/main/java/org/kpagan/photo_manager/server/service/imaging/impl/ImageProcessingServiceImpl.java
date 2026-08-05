@@ -1,4 +1,4 @@
-package org.kpagan.photo_manager.server.imaging.impl;
+package org.kpagan.photo_manager.server.service.imaging.impl;
 
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -9,8 +9,8 @@ import org.kpagan.photo_manager.server.image.ImageMetadata;
 import org.kpagan.photo_manager.server.image.ImageModel;
 import org.kpagan.photo_manager.server.image.MetadataExtractor;
 import org.kpagan.photo_manager.server.image.error.ImageMetadataExtractionException;
-import org.kpagan.photo_manager.server.imaging.ImageDatabaseService;
-import org.kpagan.photo_manager.server.imaging.ImageProcessingService;
+import org.kpagan.photo_manager.server.service.imaging.ImageDatabaseService;
+import org.kpagan.photo_manager.server.service.imaging.ImageProcessingService;
 import org.kpagan.photo_manager.server.io.FileWalker;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +26,7 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
 
     // Poison pill object to gracefully signal the DB thread that scanning is done
     private static final ImageModel NO_MORE_IMAGES = new ImageModel(null, null);
+    public static final int QUEUE_CAPACITY = 500;
 
     private final ImageDatabaseService databaseService;
     private final ExecutorService dbExecutor;
@@ -39,7 +40,7 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
         // Single-Threaded Executor strictly dedicated to Database Writes/Queries
         this.dbExecutor = Executors.newSingleThreadExecutor();
         // Bounded queue to prevent out-of-memory issues if hashing is faster than DB writes
-        this.queue = new LinkedBlockingQueue<>(500);
+        this.queue = new LinkedBlockingQueue<>(QUEUE_CAPACITY);
     }
 
 
@@ -70,10 +71,9 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
                 });
             });
 
-            log.info("Discovered {} photos. Waiting for processing and storing to DB to finish...", + submittedTasks.get());
+            log.info("Discovered {} photos. Waiting for processing and storing to DB to finish...", +submittedTasks.get());
 
-            // Main thread arrives (finishes stream reading) AND deregisters its initial registration.
-            // When the remaining active worker count drops to 0, this call returns instantly.
+            // 2. Main thread arrives AND blocks until all worker parties hit 0
             phaser.arriveAndAwaitAdvance();
 
             // Guaranteed: Every single photo worker has completed!

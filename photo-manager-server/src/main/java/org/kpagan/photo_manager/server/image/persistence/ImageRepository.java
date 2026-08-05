@@ -28,4 +28,6 @@ public interface ImageRepository extends JpaRepository<ImageEntity, Long> {
             @Param("targetHash") long targetHash,
             @Param("maxDistance") int maxDistance
     );
+
+
 }

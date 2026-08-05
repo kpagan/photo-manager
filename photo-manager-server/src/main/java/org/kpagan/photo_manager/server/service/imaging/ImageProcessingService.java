@@ -1,4 +1,4 @@
-package org.kpagan.photo_manager.server.imaging;
+package org.kpagan.photo_manager.server.service.imaging;
 
 import java.io.IOException;
 import java.nio.file.Path;

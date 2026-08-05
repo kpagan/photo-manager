@@ -2,7 +2,7 @@ package org.kpagan.photo_manager.server.event.file;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.kpagan.photo_manager.server.imaging.ImageProcessingService;
+import org.kpagan.photo_manager.server.service.imaging.ImageProcessingService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;

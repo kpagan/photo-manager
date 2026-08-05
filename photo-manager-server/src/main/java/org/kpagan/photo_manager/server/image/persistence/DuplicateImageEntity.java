@@ -25,11 +25,12 @@ public class DuplicateImageEntity {
     }
 
     @Embeddable
-    @Getter
     @AllArgsConstructor
     @NoArgsConstructor
     static class DuplicateId implements Serializable {
-        long image1;
-        long image2;
+        @Column(name = "image1_id")
+        long image1Id;
+        @Column(name = "image2_id")
+        long image2Id;
     }
 }
