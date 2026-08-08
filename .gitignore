@@ -62,3 +62,4 @@ out/
 .vscode/
 /photos.db.mv.db
 /photos.db.trace.db
+photo-manager-ui/TODO.md
