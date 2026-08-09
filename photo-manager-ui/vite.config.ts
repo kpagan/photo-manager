@@ -6,5 +6,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
+    proxy: {
+      '/photos/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      }
+    }
   }
 })

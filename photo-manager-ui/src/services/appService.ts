@@ -1,22 +1,13 @@
-export type AppConfig = {
-  appName: string;
-  version: string;
-  backendStatus: string;
-  description: string;
-  features: string[];
-};
-
 export type ScanResponse = {
   message: string;
   jobId?: string;
   status?: string;
 };
 
-const DEFAULT_API_BASE_URL = 'http://localhost:8080/api';
+const DEFAULT_CONTEXT_PATH = '/photos/api';
 
-async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL ?? DEFAULT_API_BASE_URL;
-  const response = await fetch(`${baseUrl}${path}`, {
+export async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${DEFAULT_CONTEXT_PATH}${path}`, {
     headers: {
       'Content-Type': 'application/json',
     },
@@ -30,14 +21,8 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function fetchAppConfig(): Promise<AppConfig> {
-  return requestJson<AppConfig>('/config');
-}
-
 export async function startFolderScan(): Promise<ScanResponse> {
   return requestJson<ScanResponse>('/folder-scan/start', {
     method: 'POST',
   });
 }
-
-export { DEFAULT_API_BASE_URL };

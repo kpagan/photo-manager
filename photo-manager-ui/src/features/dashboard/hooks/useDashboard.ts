@@ -1,18 +1,12 @@
 import { useEffect, useState } from 'react';
-import { fetchAppConfig, startFolderScan, type AppConfig } from '../../../services/appService';
+import { startFolderScan } from '../../../services/appService';
+import { fetchDashboardData } from '../service/dashboardService';
+import { type DashboardDto } from '../model/DashboardDto';
 
 export type ScanStatus = 'idle' | 'running' | 'success' | 'error';
 
-const fallbackConfig: AppConfig = {
-  appName: 'Photo Manager',
-  version: '1.0.0',
-  backendStatus: 'offline',
-  description: 'Using local placeholder values until your Spring Boot API is reachable.',
-  features: ['Duplicate photo detection', 'Folder scan orchestration'],
-};
-
 export function useDashboard() {
-  const [config, setConfig] = useState<AppConfig | null>(null);
+  const [dashboard, setDashboard] = useState<DashboardDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [scanState, setScanState] = useState<ScanStatus>('idle');
@@ -23,16 +17,16 @@ export function useDashboard() {
 
     const loadConfig = async () => {
       try {
-        const data = await fetchAppConfig();
+        const data: DashboardDto = await fetchDashboardData();
 
         if (isMounted) {
-          setConfig(data);
+          setDashboard(data);
           setError(null);
         }
       } catch {
         if (isMounted) {
-          setConfig(fallbackConfig);
-          setError('Unable to reach the backend yet. Set VITE_API_BASE_URL to your Spring Boot API base URL.');
+          setDashboard(null);
+          setError('Unable to reach the backend application. Verify the server is running and the UI is configured correctly and that there is no blocking communication between frontend and backend.');
         }
       } finally {
         if (isMounted) {
@@ -63,7 +57,7 @@ export function useDashboard() {
   };
 
   return {
-    config,
+    dashboard,
     loading,
     error,
     scanState,

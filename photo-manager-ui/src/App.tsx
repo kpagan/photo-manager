@@ -3,17 +3,16 @@ import DashboardPage from './features/dashboard/components/DashboardPage';
 import { useDashboard } from './features/dashboard/hooks/useDashboard';
 
 function App() {
-  const { config, loading, error, scanState, scanMessage, handleStartScan } = useDashboard();
+  const { dashboard, loading, error, scanState, scanMessage, handleStartScan } = useDashboard();
 
   return (
     <DashboardPage
-      config={config}
+      dashboardInfo={dashboard}
       loading={loading}
       error={error}
       scanState={scanState}
       scanMessage={scanMessage}
       onStartScan={handleStartScan}
-      backendStatus={config?.backendStatus ?? 'loading'}
     />
   );
 }

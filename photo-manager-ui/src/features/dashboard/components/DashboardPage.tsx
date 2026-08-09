@@ -1,24 +1,22 @@
-import type { AppConfig } from '../../../services/appService';
 import type { ScanStatus } from '../hooks/useDashboard';
+import type { DashboardDto } from '../model/DashboardDto';
 
 type DashboardPageProps = {
-  config: AppConfig | null;
+  dashboardInfo: DashboardDto | null;
   loading: boolean;
   error: string | null;
   scanState: ScanStatus;
   scanMessage: string;
   onStartScan: () => void;
-  backendStatus: string;
 };
 
 function DashboardPage({
-  config,
+  dashboardInfo,
   loading,
   error,
   scanState,
   scanMessage,
   onStartScan,
-  backendStatus,
 }: DashboardPageProps) {
   return (
     <div className="dashboard-shell">
@@ -49,7 +47,7 @@ function DashboardPage({
             <p className="eyebrow">Dashboard</p>
             <h1>Overview</h1>
           </div>
-          <div className="status-pill">{backendStatus}</div>
+          <div className="status-pill">Pending</div>
         </header>
 
         <section className="hero-card">
@@ -67,33 +65,36 @@ function DashboardPage({
 
         <section className="content-grid">
           <article className="card">
-            <h3>Application configuration</h3>
+            <h3>Application information</h3>
             {loading ? (
-              <p>Loading configuration...</p>
-            ) : (
-              <>
+              <p>Loading information...</p>
+            ) : 
+            <>
+              {dashboardInfo ? (
                 <dl>
                   <div>
-                    <dt>App name</dt>
-                    <dd>{config?.appName}</dd>
+                    <dt>Photo folders</dt>
+                    {dashboardInfo.photoFolders.map((folder) => (
+                      <dd key={folder}>{folder}</dd>
+                    ))}
                   </div>
                   <div>
-                    <dt>Version</dt>
-                    <dd>{config?.version}</dd>
+                    <dt>Total photos</dt>
+                    <dd>{dashboardInfo.photosNumbers}</dd>
                   </div>
                   <div>
-                    <dt>Description</dt>
-                    <dd>{config?.description}</dd>
+                    <dt>Duplicate photos</dt>
+                    <dd>{dashboardInfo.duplicates}</dd>
+                  </div>
+                  <div>
+                    <dt>Similar photos</dt>
+                    <dd>{dashboardInfo.similarDuplicates}</dd>
                   </div>
                 </dl>
-                <ul className="feature-list">
-                  {config?.features.map((feature) => (
-                    <li key={feature}>{feature}</li>
-                  ))}
-                </ul>
-              </>
-            )}
-            {error ? <p className="helper-text">{error}</p> : null}
+              ) : (
+                error ? <p className="helper-text">{error}</p> : null
+              )}
+            </>}
           </article>
 
           <article className="card">
