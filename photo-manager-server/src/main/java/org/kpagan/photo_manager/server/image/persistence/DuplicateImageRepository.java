@@ -34,4 +34,6 @@ public interface DuplicateImageRepository extends JpaRepository<DuplicateImageEn
             inner join ImageEntity i2 on d.id.image2Id = i2.id
             """)
     List<DuplicateImagePairEntity> findDuplicates();
+
+    long countByExactMatch(boolean exactMatch);
 }

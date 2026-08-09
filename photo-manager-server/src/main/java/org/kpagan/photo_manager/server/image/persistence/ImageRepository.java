@@ -29,5 +29,4 @@ public interface ImageRepository extends JpaRepository<ImageEntity, Long> {
             @Param("maxDistance") int maxDistance
     );
 
-
 }

@@ -28,6 +28,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-h2console")
     implementation("org.springframework.ai:spring-ai-starter-model-ollama")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0")
     implementation("com.drewnoakes:metadata-extractor:2.20.0")
     implementation("org.mapstruct:mapstruct:1.6.3")
 

@@ -17,7 +17,9 @@ spring:
       enabled: true
   liquibase:
     change-log: classpath:/db/changelog/db.changelog-master.yaml
-
+server:
+  servlet:
+    context-path: /photos/api
 photo:
   config:
     directories: ${PHOTO_DIRS}
