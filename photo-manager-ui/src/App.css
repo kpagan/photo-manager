@@ -54,6 +54,10 @@
   cursor: not-allowed;
 }
 
+.nav-link:hover:not(.disabled) {
+  background: rgba(148, 163, 184, 0.22);
+}
+
 .sidebar-card {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);

@@ -1,56 +1,24 @@
-import type { ScanStatus } from '../hooks/useDashboard';
-import type { DashboardDto } from '../model/DashboardDto';
+import AppLayout from '../../../components/AppLayout';
+import { useDashboard } from '../hooks/useDashboard';
 
-type DashboardPageProps = {
-  dashboardInfo: DashboardDto | null;
-  loading: boolean;
-  error: string | null;
-  scanState: ScanStatus;
-  scanMessage: string;
-  onStartScan: () => void;
-};
+function DashboardPage() {
+  const { dashboard, loading, error, scanState, scanMessage, handleStartScan } = useDashboard();
 
-function DashboardPage({
-  dashboardInfo,
-  loading,
-  error,
-  scanState,
-  scanMessage,
-  onStartScan,
-}: DashboardPageProps) {
   return (
-    <div className="dashboard-shell">
-      <aside className="sidebar">
+    <AppLayout
+      brandSubtitle="Manage photo collections with a Spring Boot backend."
+      sidebarCardTitle="Backend"
+      sidebarCardDescription="Connect the UI to your Spring Boot API through the VITE_API_BASE_URL environment variable."
+    >
+      <header className="topbar">
         <div>
-          <div className="brand">Photo Manager</div>
-          <p className="brand-subtitle">Manage photo collections with a Spring Boot backend.</p>
+          <p className="eyebrow">Dashboard</p>
+          <h1>Overview</h1>
         </div>
+        <div className="status-pill">Pending</div>
+      </header>
 
-        <nav className="nav-links" aria-label="Primary navigation">
-          <button type="button" className="nav-link active">
-            Duplicate photos
-          </button>
-          <button type="button" className="nav-link disabled">
-            More options coming soon
-          </button>
-        </nav>
-
-        <div className="sidebar-card">
-          <h3>Backend</h3>
-          <p>Connect the UI to your Spring Boot API through the VITE_API_BASE_URL environment variable.</p>
-        </div>
-      </aside>
-
-      <main className="main-panel">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">Dashboard</p>
-            <h1>Overview</h1>
-          </div>
-          <div className="status-pill">Pending</div>
-        </header>
-
-        <section className="hero-card">
+      <section className="hero-card">
           <div>
             <h2>Keep your photo library organized</h2>
             <p>
@@ -58,7 +26,7 @@ function DashboardPage({
               background.
             </p>
           </div>
-          <button type="button" className="scan-button" onClick={onStartScan} disabled={scanState === 'running'}>
+          <button type="button" className="scan-button" onClick={handleStartScan} disabled={scanState === 'running'}>
             {scanState === 'running' ? 'Starting scan...' : 'Start folder scan'}
           </button>
         </section>
@@ -68,33 +36,34 @@ function DashboardPage({
             <h3>Application information</h3>
             {loading ? (
               <p>Loading information...</p>
-            ) : 
-            <>
-              {dashboardInfo ? (
-                <dl>
-                  <div>
-                    <dt>Photo folders</dt>
-                    {dashboardInfo.photoFolders.map((folder) => (
-                      <dd key={folder}>{folder}</dd>
-                    ))}
-                  </div>
-                  <div>
-                    <dt>Total photos</dt>
-                    <dd>{dashboardInfo.photosNumbers}</dd>
-                  </div>
-                  <div>
-                    <dt>Duplicate photos</dt>
-                    <dd>{dashboardInfo.duplicates}</dd>
-                  </div>
-                  <div>
-                    <dt>Similar photos</dt>
-                    <dd>{dashboardInfo.similarDuplicates}</dd>
-                  </div>
-                </dl>
-              ) : (
-                error ? <p className="helper-text">{error}</p> : null
-              )}
-            </>}
+            ) : (
+              <>
+                {dashboard ? (
+                  <dl>
+                    <div>
+                      <dt>Photo folders</dt>
+                      {dashboard.photoFolders.map((folder) => (
+                        <dd key={folder}>{folder}</dd>
+                      ))}
+                    </div>
+                    <div>
+                      <dt>Total photos</dt>
+                      <dd>{dashboard.photosNumbers}</dd>
+                    </div>
+                    <div>
+                      <dt>Duplicate photos</dt>
+                      <dd>{dashboard.duplicates}</dd>
+                    </div>
+                    <div>
+                      <dt>Similar photos</dt>
+                      <dd>{dashboard.similarDuplicates}</dd>
+                    </div>
+                  </dl>
+                ) : (
+                  error ? <p className="helper-text">{error}</p> : null
+                )}
+              </>
+            )}
           </article>
 
           <article className="card">
@@ -108,8 +77,7 @@ function DashboardPage({
             </div>
           </article>
         </section>
-      </main>
-    </div>
+    </AppLayout>
   );
 }
 

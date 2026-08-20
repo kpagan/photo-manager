@@ -1,19 +1,15 @@
 import './App.css';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import DashboardPage from './features/dashboard/components/DashboardPage';
-import { useDashboard } from './features/dashboard/hooks/useDashboard';
+import DuplicatesPage from './features/duplicates/components/DuplicatesPage';
 
 function App() {
-  const { dashboard, loading, error, scanState, scanMessage, handleStartScan } = useDashboard();
-
   return (
-    <DashboardPage
-      dashboardInfo={dashboard}
-      loading={loading}
-      error={error}
-      scanState={scanState}
-      scanMessage={scanMessage}
-      onStartScan={handleStartScan}
-    />
+    <Routes>
+      <Route path="/" element={<DashboardPage />} />
+      <Route path="/duplicates" element={<DuplicatesPage />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
