@@ -1,26 +1,10 @@
 import { NavLink } from 'react-router-dom';
-
-type DuplicatesPageProps = DuplicatesDto[];
-
-type DuplicatesDto = {
-    duplicates: DuplicateDto[]
-};
-
-type DuplicateDto = {
-    id: number;
-    filename: string;
-    absolutePath: string;
-    fileSize: number;
-    sha256: string;
-    perceptualHash: number;
-    dateTaken: string;
-    width: number;
-    height: number;
-    exactMatch: boolean;
-};
-
+import { useDuplicates } from '../hooks/useDuplicates';
 
 function DuplicatesPage() {
+
+  const { duplicates, loading, error } = useDuplicates();
+  
   return (
     <>
       <header className="topbar">
@@ -43,19 +27,40 @@ function DuplicatesPage() {
         </NavLink>
       </section>
 
-      <section className="content-grid">
+      <section className="hero-card">
         <article className="card">
-          <h3>What to expect</h3>
-          <p className="helper-text">
-            Connect the API to list duplicate groups, keep decisions, and review photos side by side.
-          </p>
-        </article>
-
-        <article className="card">
-          <h3>Next step</h3>
-          <p className="helper-text">
-            The navigation is wired up; the remaining work is to populate this page from your backend service.
-          </p>
+          <h3>Duplicate photos</h3>
+          {loading ? (
+              <p>Loading information...</p>
+            ) : (
+              <>
+                {duplicates.length > 0 ? (
+                  <div className="duplicate-groups">
+                    {duplicates.map((duplicate) => (
+                      <article className="duplicate-group" key={duplicate.duplicates[0]?.id}>
+                        <h4>Duplicate photo</h4>
+                        <div className="duplicate-photos">
+                          {duplicate.duplicates.map((photo) => (
+                            <div className="duplicate-photo" key={photo.id}>
+                              <div>Filename: {photo.filename}</div>
+                              <div>Path: {photo.absolutePath}</div>
+                              <div>Size: {photo.fileSize} bytes</div>
+                              <div>Dimensions: {photo.width}x{photo.height}</div>
+                              <div>Date taken: {photo.dateTaken}</div>
+                              {photo.exactMatch !== undefined && (
+                                <div>Exact match: {photo.exactMatch ? 'Yes' : 'No'}</div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  error ? <p className="helper-text">{error}</p> : null
+                )}
+              </>
+            )}
         </article>
       </section>
     </>
