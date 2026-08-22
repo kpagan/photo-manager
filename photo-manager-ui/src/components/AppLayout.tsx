@@ -1,25 +1,12 @@
-import type { ReactNode } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 
-type AppLayoutProps = {
-  children: ReactNode;
-  brandSubtitle: string;
-  sidebarCardTitle: string;
-  sidebarCardDescription: string;
-};
-
-function AppLayout({
-  children,
-  brandSubtitle,
-  sidebarCardTitle,
-  sidebarCardDescription,
-}: AppLayoutProps) {
+function AppLayout() {
   return (
     <div className="dashboard-shell">
       <aside className="sidebar">
         <div>
           <div className="brand">Photo Manager</div>
-          <p className="brand-subtitle">{brandSubtitle}</p>
+          <p className="brand-subtitle">Manage your photo collection.</p>
         </div>
 
         <nav className="nav-links" aria-label="Primary navigation">
@@ -35,12 +22,14 @@ function AppLayout({
         </nav>
 
         <div className="sidebar-card">
-          <h3>{sidebarCardTitle}</h3>
-          <p>{sidebarCardDescription}</p>
+          <h3>Backend</h3>
+          <p>Connect the UI to your Spring Boot API through the VITE_API_BASE_URL environment variable.</p>
         </div>
       </aside>
 
-      <main className="main-panel">{children}</main>
+      <main className="main-panel">
+        <Outlet />
+      </main>
     </div>
   );
 }

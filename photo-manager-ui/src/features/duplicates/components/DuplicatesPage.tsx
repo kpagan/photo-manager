@@ -1,4 +1,3 @@
-import AppLayout from '../../../components/AppLayout';
 import { NavLink } from 'react-router-dom';
 
 type DuplicatesPageProps = DuplicatesDto[];
@@ -23,11 +22,7 @@ type DuplicateDto = {
 
 function DuplicatesPage() {
   return (
-    <AppLayout
-      brandSubtitle="Review duplicate and similar photos in your collection."
-      sidebarCardTitle="Duplicates"
-      sidebarCardDescription="Use this screen to review photo groups once the backend exposes duplicate data."
-    >
+    <>
       <header className="topbar">
         <div>
           <p className="eyebrow">Duplicates</p>
@@ -63,7 +58,7 @@ function DuplicatesPage() {
           </p>
         </article>
       </section>
-    </AppLayout>
+    </>
   );
 }
 

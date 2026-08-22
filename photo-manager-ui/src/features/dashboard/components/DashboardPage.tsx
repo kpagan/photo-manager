@@ -1,15 +1,10 @@
-import AppLayout from '../../../components/AppLayout';
 import { useDashboard } from '../hooks/useDashboard';
 
 function DashboardPage() {
   const { dashboard, loading, error, scanState, scanMessage, handleStartScan } = useDashboard();
 
   return (
-    <AppLayout
-      brandSubtitle="Manage photo collections with a Spring Boot backend."
-      sidebarCardTitle="Backend"
-      sidebarCardDescription="Connect the UI to your Spring Boot API through the VITE_API_BASE_URL environment variable."
-    >
+    <>
       <header className="topbar">
         <div>
           <p className="eyebrow">Dashboard</p>
@@ -77,7 +72,7 @@ function DashboardPage() {
             </div>
           </article>
         </section>
-    </AppLayout>
+    </>
   );
 }
 
