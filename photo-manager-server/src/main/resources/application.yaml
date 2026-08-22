@@ -17,6 +17,10 @@ spring:
       enabled: true
   liquibase:
     change-log: classpath:/db/changelog/db.changelog-master.yaml
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+    default-property-inclusion: non_null
 server:
   servlet:
     context-path: /photos/api
