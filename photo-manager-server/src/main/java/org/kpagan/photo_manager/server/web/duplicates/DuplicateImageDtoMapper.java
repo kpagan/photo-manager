@@ -13,6 +13,8 @@ public interface DuplicateImageDtoMapper {
 
     DuplicateDto mapToDto(DuplicateImageModel model);
 
+    DuplicatesDto mapToDto(DuplicateImagesModel model);
+
     List<DuplicatesDto> mapToDto(List<DuplicateImagesModel> model);
 
 }

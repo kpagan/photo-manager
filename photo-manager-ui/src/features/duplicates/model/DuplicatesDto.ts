@@ -15,6 +15,17 @@ export type DuplicateDto = {
     exactMatch?: boolean;
 };
 
+export type PageResponse<T> = {
+    content: T[];
+    totalPages: number;
+    totalElements: number;
+    number: number;
+    size: number;
+    first: boolean;
+    last: boolean;
+    empty: boolean;
+};
+
 export const mockDuplicatesData: DuplicatesDto[] = [
   {
     "duplicates": [
