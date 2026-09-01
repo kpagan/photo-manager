@@ -1,5 +1,7 @@
 package org.kpagan.photo_manager.server.io;
 
+import org.kpagan.photo_manager.server.io.util.FileUtils;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,11 +30,7 @@ public class FileWalker {
     }
 
     private static boolean isImageFile(Path path) {
-        String fileName = path.getFileName().toString().toLowerCase();
-        int dotIndex = fileName.lastIndexOf('.');
-        if (dotIndex == -1) return false;
-
-        String extension = fileName.substring(dotIndex + 1);
+        String extension = FileUtils.getFileExtension(path);
         return ALLOWED_EXTENSIONS.contains(extension);
     }
 }

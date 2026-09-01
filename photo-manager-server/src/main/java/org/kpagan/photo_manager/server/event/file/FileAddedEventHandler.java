@@ -2,6 +2,7 @@ package org.kpagan.photo_manager.server.event.file;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.kpagan.photo_manager.server.io.util.FileUtils;
 import org.kpagan.photo_manager.server.service.imaging.ImageProcessingService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
@@ -24,7 +25,7 @@ public class FileAddedEventHandler {
     public void handleNewFileAdded(FileAddedEvent event) {
         Path path = event.path();
         String filename = path.toFile().getName();
-        String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
+        String extension = FileUtils.getFileExtension(path);
         if (!allowedExtensions.contains(extension)) {
             log.info("Skipping added file {} because it is not supported", filename);
             return;
