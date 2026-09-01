@@ -4,4 +4,8 @@ public class ImageLoadException extends RuntimeException {
     public ImageLoadException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    public ImageLoadException(String message) {
+        super(message);
+    }
 }

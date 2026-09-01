@@ -13,12 +13,9 @@ import org.springframework.stereotype.Service;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.FileNameMap;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,21 +25,27 @@ public class ImageServiceImpl implements ImageService {
 
     @Override
     public StreamingResourceModel getImageStream(Long imageId) {
-        Optional<ImageEntity> optionalImage = imageRepository.findById(imageId);
-        if (optionalImage.isEmpty()) {
-            throw new EntityNotFoundException("Not found image with id: " + imageId);
+        ImageEntity image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new EntityNotFoundException("Not found image with id: " + imageId));
+
+        Path path = Paths.get(image.getAbsolutePath());
+        if (!Files.exists(path)) {
+            throw new ImageLoadException("Image file does not exist at path: " + image.getAbsolutePath());
         }
-        ImageEntity image = optionalImage.get();
+
+        long filesize;
+        try {
+            filesize = Files.size(path);
+        } catch (IOException e) {
+            throw new ImageLoadException("Error while calculating filesize for file", e);
+        }
+
         StreamWriter streamWriter = outputStream -> {
-            try (FileInputStream fis = new FileInputStream(image.getAbsolutePath());
-                 BufferedInputStream bis = new BufferedInputStream(fis)) {
-                byte[] buffer = new byte[1024];
-                while (bis.read(buffer) != -1) {
-                    outputStream.write(buffer);
-                }
+            try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(image.getAbsolutePath()))) {
+                bis.transferTo(outputStream);
             } catch (IOException e) {
                 throw new ImageLoadException(
-                        String.format("Error while loading image with id: %d, absolute path: %s ",
+                        String.format("Error while loading image with id: %d, absolute path: %s",
                                 imageId,
                                 image.getAbsolutePath()),
                         e);
@@ -51,22 +54,6 @@ public class ImageServiceImpl implements ImageService {
             }
         };
 
-        Path path = Paths.get(image.getAbsolutePath());
-        long filesize;
-        try {
-            filesize = Files.size(path);
-        } catch (IOException e) {
-            throw new ImageLoadException("Error while calculating filesize for file", e);
-        }
-        String filename = image.getFilename();
-        return new StreamingResourceModel(getMediaType(filename),
-                filename,
-                filesize,
-                streamWriter);
-    }
-
-    private static String getMediaType(String filename) {
-        FileNameMap fileNameMap = URLConnection.getFileNameMap();
-        return fileNameMap.getContentTypeFor(filename);
+        return new StreamingResourceModel(path, filesize, streamWriter);
     }
 }

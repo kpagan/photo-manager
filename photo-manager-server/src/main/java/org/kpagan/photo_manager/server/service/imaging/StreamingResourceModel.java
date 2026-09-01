@@ -1,7 +1,6 @@
 package org.kpagan.photo_manager.server.service.imaging;
 
-public record StreamingResourceModel(String mediaType,
-                                     String filename,
-                                     long contentLength,
-                                     StreamWriter streamWriter) {
+import java.nio.file.Path;
+
+public record StreamingResourceModel(Path path, long contentLength, StreamWriter streamWriter) {
 }
