@@ -63,3 +63,5 @@ out/
 /photos.db.mv.db
 /photos.db.trace.db
 photo-manager-ui/TODO.md
+implementation_plan.md
+walkthrough.md

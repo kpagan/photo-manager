@@ -1,0 +1,42 @@
+import { useEffect, useState } from 'react';
+import { getImage } from '../../../services/appService';
+
+export function useImageLoader(imageId: number) {
+    const [loading, setLoading] = useState<boolean>(true);
+    const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        let isMounted = true;
+        const loadImage = async () => {
+            try {
+                const response = await getImage(imageId);
+                if (isMounted) {
+                    setImageUrl(response);
+                    setError(null);
+                }
+            } catch (err) {
+                if (isMounted) {
+                    setError('Failed to load image');
+                    setImageUrl(null);
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
+            };
+
+        };
+        loadImage();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    return {
+        imageUrl,
+        loading,
+        error,
+    };
+}

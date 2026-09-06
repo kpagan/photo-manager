@@ -21,6 +21,20 @@ export async function requestJson<T>(path: string, init?: RequestInit): Promise<
   return response.json() as Promise<T>;
 }
 
+export async function getImage(imageId: number): Promise<string> {
+    try {
+        const response = await fetch(`${DEFAULT_CONTEXT_PATH}/image/${imageId}`, {
+            method: 'GET',
+            cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+        })
+        const blob = await response.blob()
+        return URL.createObjectURL(blob);
+    }
+    catch (error) {
+        throw error;
+    }
+}   
+
 export async function startFolderScan(): Promise<ScanResponse> {
   return requestJson<ScanResponse>('/folder-scan/start', {
     method: 'POST',

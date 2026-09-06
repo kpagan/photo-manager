@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useDuplicates } from '../hooks/useDuplicates';
+import ImageContainer from '../../image/components/ImageContainer';
 
 function DuplicatesPage() {
   const { duplicates, loading, loadingMore, hasMore, error, totalElements, loadMore, refresh } = useDuplicates();
@@ -112,6 +113,7 @@ function DuplicatesPage() {
                             {photo.exactMatch !== undefined && (
                               <div>Exact match: {photo.exactMatch ? 'Yes' : 'No'}</div>
                             )}
+                            <ImageContainer imageId={photo.id} />
                           </div>
                         ))}
                       </div>
