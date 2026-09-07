@@ -1,57 +1,9 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useDuplicates } from '../hooks/useDuplicates';
 import ImageContainer from '../../image/components/ImageContainer';
 
 function DuplicatesPage() {
-  const { duplicates, loading, loadingMore, hasMore, error, totalElements, loadMore, refresh } = useDuplicates();
-
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const scrollPosRef = useRef<number>(0);
-  const prevDuplicatesLengthRef = useRef<number>(duplicates.length);
-
-  const hasMoreRef = useRef(hasMore);
-  hasMoreRef.current = hasMore;
-
-  const loadingRef = useRef(loading || loadingMore);
-  loadingRef.current = loading || loadingMore;
-
-  const loadMoreRef = useRef(loadMore);
-  loadMoreRef.current = loadMore;
-
-  // Preserve scroll position when new duplicate items are rendered
-  useLayoutEffect(() => {
-    if (duplicates.length > prevDuplicatesLengthRef.current && prevDuplicatesLengthRef.current > 0) {
-      window.scrollTo(0, scrollPosRef.current);
-    }
-    prevDuplicatesLengthRef.current = duplicates.length;
-  }, [duplicates.length]);
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry && entry.isIntersecting && hasMoreRef.current && !loadingRef.current) {
-          scrollPosRef.current = window.scrollY;
-          loadMoreRef.current();
-        }
-      },
-      {
-        root: null,
-        rootMargin: '0px',
-        threshold: 0,
-      }
-    );
-
-    observer.observe(sentinel);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [duplicates.length]);
+  const { duplicates, loading, loadingMore, hasMore, error, totalElements, loadMore, refresh, sentinelRef } = useDuplicates();
 
   return (
     <>

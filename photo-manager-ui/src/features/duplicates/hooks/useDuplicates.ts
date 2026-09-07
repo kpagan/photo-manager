@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { DuplicatesDto } from '../model/DuplicatesDto';
 import { fetchDuplicatesData } from '../service/duplicatesService';
 
@@ -12,9 +12,13 @@ export function useDuplicates(pageSize: number = DEFAULT_PAGE_SIZE) {
   const [error, setError] = useState<string | null>(null);
   const [totalElements, setTotalElements] = useState<number>(0);
 
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const scrollPosRef = useRef<number>(0);
+  const prevDuplicatesLengthRef = useRef<number>(duplicates.length);
+
   const currentPageRef = useRef<number>(0);
   const isLoadingRef = useRef<boolean>(false);
-  const hasMoreRef = useRef<boolean>(false);
+  const hasMoreRef = useRef<boolean>(hasMore);
   const lastLoadTimeRef = useRef<number>(0);
   const abortControllerRef = useRef<AbortController | null>(null);
   const COOLDOWN_MS = 300;
@@ -94,6 +98,41 @@ export function useDuplicates(pageSize: number = DEFAULT_PAGE_SIZE) {
     };
   }, [loadInitialPage]);
 
+  // Preserve scroll position when new duplicate items are rendered
+  useLayoutEffect(() => {
+    if (duplicates.length > prevDuplicatesLengthRef.current && prevDuplicatesLengthRef.current > 0) {
+      window.scrollTo(0, scrollPosRef.current);
+    }
+    prevDuplicatesLengthRef.current = duplicates.length;
+  }, [duplicates.length]);
+
+  const loadMoreRef = useRef(loadMore);
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry && entry.isIntersecting && hasMoreRef.current && !isLoadingRef.current) {
+          scrollPosRef.current = window.scrollY;
+          loadMoreRef.current();
+        }
+      },
+      {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0,
+      }
+    );
+
+    observer.observe(sentinel);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [duplicates.length]);
+
   return {
     duplicates,
     loading,
@@ -103,5 +142,6 @@ export function useDuplicates(pageSize: number = DEFAULT_PAGE_SIZE) {
     totalElements,
     loadMore,
     refresh: loadInitialPage,
+    sentinelRef
   };
 }
