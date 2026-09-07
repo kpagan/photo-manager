@@ -16,9 +16,9 @@ export function useImageLoader(imageId: number) {
                     setError(null);
                 }
             } catch (err) {
-                if (isMounted) {
-                    setError('Failed to load image');
-                    setImageUrl(null);
+                if (isMounted) {                    
+                    setError(err instanceof Error ? err.message :'Failed to load image');
+                    setImageUrl(undefined);
                 }
             } finally {
                 if (isMounted) {
@@ -32,7 +32,7 @@ export function useImageLoader(imageId: number) {
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [imageId]);
 
     return {
         imageUrl,

@@ -30,8 +30,6 @@ export function useDuplicates(pageSize: number = DEFAULT_PAGE_SIZE) {
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
-    setLoading(true);
-    setError(null);
     isLoadingRef.current = true;
     currentPageRef.current = 0;
 
@@ -56,6 +54,12 @@ export function useDuplicates(pageSize: number = DEFAULT_PAGE_SIZE) {
       }
     }
   }, [pageSize]);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    await loadInitialPage();
+  }, [loadInitialPage]);
 
   const loadMore = useCallback(async () => {
     const now = Date.now();
@@ -90,7 +94,11 @@ export function useDuplicates(pageSize: number = DEFAULT_PAGE_SIZE) {
   }, [pageSize]);
 
   useEffect(() => {
-    loadInitialPage();
+    const load = async () => {
+      await loadInitialPage();
+    };
+
+    void load();
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -141,7 +149,7 @@ export function useDuplicates(pageSize: number = DEFAULT_PAGE_SIZE) {
     error,
     totalElements,
     loadMore,
-    refresh: loadInitialPage,
+    refresh,
     sentinelRef
   };
 }

@@ -11,7 +11,7 @@ function ImageContainer({ imageId }: { imageId: number }) {
                 error ? (
                     <div className="error-message">Error loading image: {error}</div>
                 ) : (
-                    <img src={imageUrl} alt={`Image with id ${imageId}`} />
+                    <img src={imageUrl} alt={`Image with id ${imageId}`} loading="lazy" decoding="async" />
                 )
             )}
         </div>
