@@ -26,5 +26,5 @@ server:
     context-path: /photos/api
 photo:
   config:
-    directories: ${PHOTO_DIRS}
+    directory: ${PHOTO_DIR}
     allowedExtensions: jpg, jpeg, png, heic, webp, gif

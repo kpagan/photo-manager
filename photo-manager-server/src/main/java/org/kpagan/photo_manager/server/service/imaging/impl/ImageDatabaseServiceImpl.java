@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,11 +41,11 @@ public class ImageDatabaseServiceImpl implements ImageDatabaseService {
 
         // 2. Check Exact Duplicate (SHA-256)
         List<ImageEntity> exactMatches = imageRepository.findBySha256(model.hash().sha256());
-        Set<Long> exactMatchesIds = exactMatches.stream().map(ImageEntity::getId).collect(Collectors.toSet());
+        Set<Long> exactMatchesIds = exactMatches.stream().map(ImageEntity::getId).collect(Collectors.toCollection(TreeSet::new));
 
         // 3. Near-Duplicate Check (pHash Hamming Distance)
         List<ImageEntity> nearDuplicates = imageRepository.findByHammingDistance(model.hash().perceptualHash(), MAX_DISTANCE);
-        Set<Long> nearDuplicatesIds = nearDuplicates.stream().map(ImageEntity::getId).collect(Collectors.toSet());
+        Set<Long> nearDuplicatesIds = nearDuplicates.stream().map(ImageEntity::getId).collect(Collectors.toCollection(TreeSet::new));
 
         // 4. Save the new image information
         ImageEntity entity = imageMapper.mapToEntity(model);

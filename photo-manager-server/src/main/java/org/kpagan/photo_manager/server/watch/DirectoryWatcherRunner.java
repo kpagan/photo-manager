@@ -9,7 +9,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -17,29 +17,29 @@ import java.util.List;
 @Slf4j
 public class DirectoryWatcherRunner implements ApplicationRunner {
 
-    private final List<String> watchingDirectories;
+    private final String watchingDirectory;
     private final ApplicationEventPublisher publisher;
     private final SimpleAsyncTaskExecutor simpleAsyncTaskExecutor;
 
     private DirectoryWatcher watcher;
 
-    public DirectoryWatcherRunner(@Value("${photo.config.directories}") List<String> watchingDirectories,
+    public DirectoryWatcherRunner(@Value("${photo.config.directory}") String watchingDirectory,
                                   ApplicationEventPublisher publisher) {
-        this.watchingDirectories = watchingDirectories;
+        this.watchingDirectory = watchingDirectory;
         this.publisher = publisher;
         simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor("watch-executor");
     }
 
     @Override
     public void run(@NonNull ApplicationArguments args) {
-        if (CollectionUtils.isEmpty(watchingDirectories)) {
+        if (!StringUtils.hasText(watchingDirectory)) {
             log.warn("Watch directory is not configured. Can't watch when new files are added");
             return;
         }
 
         try {
             watcher = new DirectoryWatcher(publisher);
-            watcher.registerPaths(watchingDirectories);
+            watcher.registerPaths(List.of(watchingDirectory));
             simpleAsyncTaskExecutor.execute(watcher);
         } catch (Exception e) {
             log.error("Failure initializing DirectoryWatcher", e);

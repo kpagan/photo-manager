@@ -7,18 +7,17 @@ import org.kpagan.photo_manager.server.service.dashboard.DashboardModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 public class DashboardServiceImpl implements DashBoardService {
 
-    private final List<String> scanDirectories;
+    private final String scanDirectory;
     private final DuplicateImageRepository duplicateImageRepository;
     private final ImageRepository imageRepository;
 
-    public DashboardServiceImpl(@Value("${photo.config.directories}") List<String> scanDirectories,
-                                DuplicateImageRepository duplicateImageRepository, ImageRepository imageRepository) {
-        this.scanDirectories = scanDirectories;
+    public DashboardServiceImpl(@Value("${photo.config.directory}") String scanDirectory,
+                                DuplicateImageRepository duplicateImageRepository,
+                                ImageRepository imageRepository) {
+        this.scanDirectory = scanDirectory;
         this.duplicateImageRepository = duplicateImageRepository;
         this.imageRepository = imageRepository;
     }
@@ -28,7 +27,7 @@ public class DashboardServiceImpl implements DashBoardService {
         long photosNumbers = imageRepository.count();
         long duplicates = duplicateImageRepository.countByExactMatch(true);
         long similarDuplicates = duplicateImageRepository.countByExactMatch(false);
-        return new DashboardModel(scanDirectories,
+        return new DashboardModel(scanDirectory,
                 photosNumbers,
                 duplicates,
                 similarDuplicates);
