@@ -28,3 +28,6 @@ photo:
   config:
     directory: ${PHOTO_DIR}
     allowedExtensions: jpg, jpeg, png, heic, webp, gif
+    thumbnail:
+      max-width: 300
+      storage-path: .thumbnails

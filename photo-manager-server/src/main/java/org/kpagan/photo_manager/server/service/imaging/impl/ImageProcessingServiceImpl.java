@@ -12,6 +12,7 @@ import org.kpagan.photo_manager.server.image.error.ImageMetadataExtractionExcept
 import org.kpagan.photo_manager.server.service.imaging.ImageDatabaseService;
 import org.kpagan.photo_manager.server.service.imaging.ImageProcessingService;
 import org.kpagan.photo_manager.server.io.FileWalker;
+import org.kpagan.photo_manager.server.service.imaging.ThumbnailService;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -25,16 +26,22 @@ import java.util.stream.Stream;
 public class ImageProcessingServiceImpl implements ImageProcessingService {
 
     // Poison pill object to gracefully signal the DB thread that scanning is done
-    private static final ImageModel NO_MORE_IMAGES = new ImageModel(null, null);
+    private static final ImageModel NO_MORE_IMAGES = new ImageModel(null, null, null);
     public static final int QUEUE_CAPACITY = 500;
 
     private final ImageDatabaseService databaseService;
     private final ExecutorService dbExecutor;
     private final BlockingQueue<ImageModel> queue;
     private final ExecutorService workerPool;
+    private final ThumbnailService thumbnailService;
+    private final FileWalker fileWalker;
 
-    public ImageProcessingServiceImpl(ImageDatabaseService databaseService) {
+    public ImageProcessingServiceImpl(ImageDatabaseService databaseService,
+                                      ThumbnailService thumbnailService,
+                                      FileWalker fileWalker) {
         this.databaseService = databaseService;
+        this.thumbnailService = thumbnailService;
+        this.fileWalker = fileWalker;
         int cpuCores = Runtime.getRuntime().availableProcessors();
         this.workerPool = Executors.newFixedThreadPool(cpuCores);
         // Single-Threaded Executor strictly dedicated to Database Writes/Queries
@@ -49,7 +56,7 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
         // 1. Start the single-threaded DB Consumer
         Future<?> dbTask = dbExecutor.submit(() -> runDbConsumer(queue));
 
-        try (Stream<Path> paths = FileWalker.traverseDirectory(directory)) {
+        try (Stream<Path> paths = fileWalker.traverseDirectory(directory)) {
             // Counter to track total tasks submitted vs completed
             AtomicLong submittedTasks = new AtomicLong(0);
             // 2. Phaser starts with 1 registered party (the main thread)
@@ -88,26 +95,26 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
     @Override
     public void processImage(Path path) {
         try {
-            databaseService.processAndSave(createImageModel(path));
+            databaseService.processAndSave(generateThumbnailAndImageModel(path));
         } catch (ImageMetadataExtractionException | HashingException e) {
             log.error("Skipping processing file {} due to error", path, e);
         }
     }
 
-    private ImageModel createImageModel(Path path) throws HashingException, ImageMetadataExtractionException {
+    private ImageModel generateThumbnailAndImageModel(Path path) throws HashingException, ImageMetadataExtractionException {
         log.info("Processing image: {}", path.toString());
         HashInformation hash = HashGenerator.getHashInformation(path);
         ImageMetadata imageMetadata = MetadataExtractor.extractMetadata(path);
         log.debug("Metadata {}", imageMetadata);
-        databaseService.processAndSave(new ImageModel(imageMetadata, hash));
-        return new ImageModel(imageMetadata, hash);
+        Path thumbnailPath = thumbnailService.generateThumbnail(path.toAbsolutePath());
+        return new ImageModel(imageMetadata, hash, thumbnailPath.toString());
     }
 
     // --- PRODUCER (Runs in parallel across multiple CPU cores) ---
     private void producePhotoData(Path path, BlockingQueue<ImageModel> queue) {
         try {
             // Blocks producer thread automatically if queue reaches capacity (500 items)
-            queue.put(createImageModel(path));
+            queue.put(generateThumbnailAndImageModel(path));
         } catch (Exception e) {
             log.error("Worker failed processing {}", path.getFileName(), e);
         }

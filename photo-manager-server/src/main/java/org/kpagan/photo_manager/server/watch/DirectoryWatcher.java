@@ -3,13 +3,13 @@ package org.kpagan.photo_manager.server.watch;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.kpagan.photo_manager.server.event.file.FileAddedEvent;
+import org.kpagan.photo_manager.server.service.imaging.PhotoPathService;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -24,12 +24,14 @@ public class DirectoryWatcher implements Runnable, AutoCloseable {
 
     public static final int DELAY = 50;
     private final ApplicationEventPublisher publisher;
+    private final PhotoPathService photoPathService;
     private final WatchService watchService;
     private final ScheduledExecutorService executorService;
     private final Map<WatchKey, Path> keys;
 
-    public DirectoryWatcher(ApplicationEventPublisher publisher) throws IOException {
+    public DirectoryWatcher(ApplicationEventPublisher publisher, PhotoPathService photoPathService) throws IOException {
         this.publisher = publisher;
+        this.photoPathService = photoPathService;
         this.watchService = FileSystems.getDefault().newWatchService();
         this.executorService = Executors.newSingleThreadScheduledExecutor();
         this.keys = new HashMap<>();
@@ -42,12 +44,9 @@ public class DirectoryWatcher implements Runnable, AutoCloseable {
         return (WatchEvent<T>) event;
     }
 
-    public void registerPaths(List<String> paths) throws IOException {
-        for (String dir : paths) {
-            Path path = Paths.get(dir);
-            log.info("Watching {} ...", dir);
-            registerAll(path);
-        }
+    public void initWatching() throws IOException {
+        registerAll(photoPathService.getPhotosPath());
+        log.info("Watching {} ...", photoPathService.getPhotosPath());
     }
 
     /**
@@ -75,6 +74,10 @@ public class DirectoryWatcher implements Runnable, AutoCloseable {
         Files.walkFileTree(start, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult preVisitDirectory(@NonNull Path dir, @NonNull BasicFileAttributes attrs) throws IOException {
+                if (photoPathService.isThumbnailPath(dir)) {
+                    log.debug("Skipping watch registration on thumbnail directory: {}", dir);
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
                 register(dir);
                 return FileVisitResult.CONTINUE;
             }
@@ -121,17 +124,18 @@ public class DirectoryWatcher implements Runnable, AutoCloseable {
                     if (kind == ENTRY_CREATE) {
                         try {
                             if (Files.isDirectory(child, NOFOLLOW_LINKS)) {
-                                registerAll(child);
-                                // when a directory that already contains files is created then publish events for the contained files
-                                Files.walkFileTree(child, new SimpleFileVisitor<>() {
-                                    @Override
-                                    public FileVisitResult visitFile(@NonNull Path file, @NonNull BasicFileAttributes attrs) throws IOException {
-                                        publisher.publishEvent(new FileAddedEvent(file));
-                                        return super.visitFile(file, attrs);
-                                    }
-                                });
-
-                            } else {
+                                if (!photoPathService.isThumbnailPath(child)) {
+                                    registerAll(child);
+                                    // when a directory that already contains files is created then publish events for the contained files
+                                    Files.walkFileTree(child, new SimpleFileVisitor<>() {
+                                        @Override
+                                        public FileVisitResult visitFile(@NonNull Path file, @NonNull BasicFileAttributes attrs) throws IOException {
+                                            publisher.publishEvent(new FileAddedEvent(file));
+                                            return super.visitFile(file, attrs);
+                                        }
+                                    });
+                                }
+                            } else if (photoPathService.isProcessablePhoto(child)) {
                                 // publish event only if it is an actual file, not a directory
                                 executorService.schedule(() -> publisher.publishEvent(new FileAddedEvent(child)), DELAY, TimeUnit.MILLISECONDS);
                             }

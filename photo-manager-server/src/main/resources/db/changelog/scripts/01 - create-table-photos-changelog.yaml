@@ -25,6 +25,11 @@ databaseChangeLog:
                   name: absolute_path
                   type: VARCHAR(512)
               - column:
+                  constraints:
+                    nullable: false
+                  name: thumbnail_path
+                  type: VARCHAR(512)
+              - column:
                   name: file_size
                   type: BIGINT
               - column:

@@ -1,36 +1,47 @@
 package org.kpagan.photo_manager.server.io;
 
-import org.kpagan.photo_manager.server.io.util.FileUtils;
+import lombok.RequiredArgsConstructor;
+import org.kpagan.photo_manager.server.service.imaging.PhotoPathService;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Set;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
+@Component
+@RequiredArgsConstructor
 public class FileWalker {
 
-    // Supported image extensions
-    private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "heic", "webp", "gif");
+    private final PhotoPathService photoPathService;
 
-    public static Stream<Path> traverseDirectory(String directory) throws IOException {
-        Path path = Path.of(directory).toAbsolutePath().normalize();
-        validatePath(path);
-        return Files.walk(path).filter(Files::isRegularFile) // Ignore directories themselves
-                .filter(FileWalker::isImageFile);
-    }
+    public Stream<Path> traverseDirectory(String directory) throws IOException {
+        Path rootPath = Path.of(directory).toAbsolutePath().normalize();
+        List<Path> discoveredPhotos = new ArrayList<>();
 
-    private static void validatePath(Path path) {
-        if (!path.toFile().exists()) {
-            throw new IllegalArgumentException("Path %s does not exist".formatted(path.toString()));
-        }
-        if (!path.toFile().isDirectory()) {
-            throw new IllegalArgumentException("Path %s is not a directory".formatted(path.toString()));
-        }
-    }
+        Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                if (photoPathService.isThumbnailPath(dir)) {
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
+                return FileVisitResult.CONTINUE;
+            }
 
-    private static boolean isImageFile(Path path) {
-        String extension = FileUtils.getFileExtension(path);
-        return ALLOWED_EXTENSIONS.contains(extension);
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                if (attrs.isRegularFile() && photoPathService.isProcessablePhoto(file)) {
+                    discoveredPhotos.add(file);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        return discoveredPhotos.stream();
     }
 }

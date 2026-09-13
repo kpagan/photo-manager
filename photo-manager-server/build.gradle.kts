@@ -31,6 +31,7 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0")
     implementation("com.drewnoakes:metadata-extractor:2.20.0")
     implementation("org.mapstruct:mapstruct:1.6.3")
+    implementation("net.coobird:thumbnailator:0.4.20")
 
     compileOnly("org.projectlombok:lombok")
 

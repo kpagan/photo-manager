@@ -29,6 +29,9 @@ public class ImageEntity {
     @Column(name = "absolute_path", nullable = false, unique = true)
     private String absolutePath;
 
+    @Column(name = "thumbnail_path", nullable = false)
+    private String thumbnailPath;
+
     @Column(name = "file_size")
     private Long fileSize;
 

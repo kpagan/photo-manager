@@ -18,4 +18,16 @@ public class FileUtils {
         }
         return "";
     }
+
+    public static String getFilenameWithoutExtension(Path path) {
+        if (path == null) {
+            return "";
+        }
+        String filename = path.toFile().getName();
+        int dotIndex = filename.lastIndexOf(".");
+        if (dotIndex >= 0) {
+            return filename.substring(0, dotIndex).toLowerCase();
+        }
+        return "";
+    }
 }
