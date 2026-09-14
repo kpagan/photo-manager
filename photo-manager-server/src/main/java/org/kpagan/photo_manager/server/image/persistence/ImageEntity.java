@@ -10,8 +10,8 @@ import java.time.LocalTime;
 
 @Entity
 @Table(name = "photos", indexes = {
-        @Index(name = "idx_sha256", columnList = "sha256"),
-        @Index(name = "idx_perceptual_hash", columnList = "perceptualHash"),
+        @Index(name = "idx_photos_sha256", columnList = "sha256"),
+        @Index(name = "idx_photos_perceptual_hash", columnList = "perceptualHash"),
         @Index(name = "idx_absolute_path", columnList="absolutePath", unique = true)
 })
 @Getter
@@ -39,7 +39,7 @@ public class ImageEntity {
     private String sha256;
 
     // 16-bit partitions for fast indexed SQL queries
-    @Column(name = "perceptual_hash")
+    @Column(name = "perceptual_hash", nullable = false)
     private long perceptualHash;
 
     // Metadata Fields

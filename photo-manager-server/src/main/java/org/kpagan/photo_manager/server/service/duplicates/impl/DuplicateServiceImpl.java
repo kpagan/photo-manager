@@ -1,16 +1,19 @@
 package org.kpagan.photo_manager.server.service.duplicates.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.kpagan.photo_manager.server.image.persistence.DuplicateImagePairEntity;
-import org.kpagan.photo_manager.server.image.persistence.DuplicateImageRepository;
-import org.kpagan.photo_manager.server.service.duplicates.*;
+import org.kpagan.photo_manager.server.image.persistence.DuplicateGroupMappingsRepository;
+import org.kpagan.photo_manager.server.image.persistence.DuplicateImageEntity;
+import org.kpagan.photo_manager.server.image.persistence.DuplicateImageGroupRepository;
+import org.kpagan.photo_manager.server.service.duplicates.DuplicateImageModel;
+import org.kpagan.photo_manager.server.service.duplicates.DuplicateImageModelMapper;
+import org.kpagan.photo_manager.server.service.duplicates.DuplicateImagesModel;
+import org.kpagan.photo_manager.server.service.duplicates.DuplicateService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -19,30 +22,27 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DuplicateServiceImpl implements DuplicateService {
 
-    private final DuplicateImageRepository duplicateImageRepository;
+    private final DuplicateImageGroupRepository duplicateImageGroupRepository;
+    private final DuplicateGroupMappingsRepository duplicateGroupMappingsRepository;
     private final DuplicateImageModelMapper duplicateImageModelMapper;
 
     @Override
     public Page<DuplicateImagesModel> getDuplicates(Pageable pageable) {
-        Page<Long> image1IdsPage = duplicateImageRepository.findDistinctImage1Ids(pageable);
-        if (image1IdsPage.isEmpty()) {
-            return new PageImpl<>(List.of(), pageable, image1IdsPage.getTotalElements());
+        Page<Long> groupsPage = duplicateImageGroupRepository.getGroupIds(pageable);
+        if (groupsPage.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, groupsPage.getTotalElements());
         }
 
-        List<DuplicateImagePairEntity> duplicates = duplicateImageRepository.findDuplicatesByImage1Ids(image1IdsPage.getContent());
-        List<DuplicateImagePairModel> imagePairModels = duplicates.stream().map(duplicateImageModelMapper::mapToModel).toList();
-        Map<DuplicateImageModel, List<DuplicateImageModel>> duplicatesForImage1 = imagePairModels.stream()
-                .collect(Collectors.groupingBy(
-                        DuplicateImagePairModel::image1,
-                        LinkedHashMap::new,
-                        Collectors.mapping(DuplicateImagePairModel::image2, Collectors.toList())));
-        List<DuplicateImagesModel> duplicateImagesModels = new ArrayList<>(duplicatesForImage1.size());
-        for (var duplicateEntry : duplicatesForImage1.entrySet()) {
-            List<DuplicateImageModel> duplicatesForImage = new ArrayList<>();
-            duplicatesForImage.add(duplicateEntry.getKey());
-            duplicatesForImage.addAll(duplicateEntry.getValue());
+        List<DuplicateImageEntity> duplicates = duplicateGroupMappingsRepository.findByByGroupIds(groupsPage.getContent());
+        List<DuplicateImageModel> duplicateImageModels = duplicates.stream().map(duplicateImageModelMapper::mapToModel).toList();
+        Map<Long, List<DuplicateImageModel>> duplicatesByGroup = duplicateImageModels.stream()
+                .collect(Collectors.groupingBy(DuplicateImageModel::groupId));
+
+        List<DuplicateImagesModel> duplicateImagesModels = new ArrayList<>(duplicatesByGroup.size());
+        for (var duplicateEntry : duplicatesByGroup.entrySet()) {
+            List<DuplicateImageModel> duplicatesForImage = new ArrayList<>(duplicateEntry.getValue());
             duplicateImagesModels.add(new DuplicateImagesModel(duplicatesForImage));
         }
-        return new PageImpl<>(duplicateImagesModels, pageable, image1IdsPage.getTotalElements());
+        return new PageImpl<>(duplicateImagesModels, pageable, groupsPage.getTotalElements());
     }
 }

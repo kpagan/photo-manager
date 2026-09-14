@@ -36,10 +36,8 @@ function DashboardPage() {
                 {dashboard ? (
                   <dl>
                     <div>
-                      <dt>Photo folders</dt>
-                      {dashboard.photoFolders.map((folder) => (
-                        <dd key={folder}>{folder}</dd>
-                      ))}
+                      <dt>Photo folder</dt>
+                      <dd>{dashboard.photoFolder}</dd>
                     </div>
                     <div>
                       <dt>Total photos</dt>
