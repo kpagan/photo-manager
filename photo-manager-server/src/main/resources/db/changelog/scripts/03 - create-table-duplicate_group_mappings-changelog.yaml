@@ -1,63 +1,59 @@
 databaseChangeLog:
   - changeSet:
-      id: create-table-duplicate_images-1
+      id: create-table-duplicate_group_mappings-1
       author: kpagan
       objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
       changes:
         - createTable:
             columns:
               - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_duplicate_group_mappings
+                  name: group_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_duplicate_group_mappings
+                  name: photo_id
+                  type: BIGINT
+              - column:
                   name: exact_match
                   type: BOOLEAN
-              - column:
-                  constraints:
-                    nullable: false
-                    primaryKey: true
-                    primaryKeyName: pk_duplicate_images
-                  name: image1_id
-                  type: BIGINT
-              - column:
-                  constraints:
-                    nullable: false
-                    primaryKey: true
-                    primaryKeyName: pk_duplicate_images
-                  name: image2_id
-                  type: BIGINT
-            tableName: duplicate_images
+            tableName: duplicate_group_mappings
   - changeSet:
-      id: create-table-duplicate_images-2
+      id: create-table-duplicate_group_mappings-2
       author: kpagan
       objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
       changes:
         - addForeignKeyConstraint:
-            constraintName: FK_DUP_IMAGE_1
-            baseTableName: duplicate_images
-            baseColumnNames: image1_id
-            referencedTableName: photos
+            constraintName: FK_DUP_GRP_MAP_GROUP
+            baseTableName: duplicate_group_mappings
+            baseColumnNames: group_id
+            referencedTableName: duplicate_groups
             referencedColumnNames: id
             onDelete: CASCADE
   - changeSet:
-      id: create-table-duplicate_images-3
+      id: create-table-duplicate_group_mappings-3
       author: kpagan
       objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
       changes:
         - addForeignKeyConstraint:
-            constraintName: FK_DUP_IMAGE_2
-            baseTableName: duplicate_images
-            baseColumnNames: image2_id
+            constraintName: FK_DUP_GRP_MAP_PHOTOS
+            baseTableName: duplicate_group_mappings
+            baseColumnNames: photo_id
             referencedTableName: photos
             referencedColumnNames: id
             onDelete: CASCADE
   - changeSet:
-      id: create-table-duplicate_images-4
+      id: create-table-duplicate_group_mappings-4
       author: kpagan
       objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
       changes:
-        - createIndex:
-            columns:
-              - column:
-                  name: exact_match
-            indexName: idx_exact_match
-            tableName: duplicate_images
-
-
+        - addUniqueConstraint:
+            columnNames: photo_id
+            constraintName: uc_duplicate_group_mappings_photo
+            tableName: duplicate_group_mappings

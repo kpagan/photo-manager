@@ -1,10 +1,9 @@
 package org.kpagan.photo_manager.server.web.duplicates;
 
-import org.jspecify.annotations.Nullable;
-
 import java.time.LocalDate;
 
 public record DuplicateDto(Long id,
+                           Long groupId,
                            String filename,
                            String absolutePath,
                            Long fileSize,
@@ -13,5 +12,5 @@ public record DuplicateDto(Long id,
                            LocalDate dateTaken,
                            Integer width,
                            Integer height,
-                           @Nullable Boolean exactMatch) {
+                           boolean exactMatch) {
 }

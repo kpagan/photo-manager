@@ -1,0 +1,48 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-duplicate_groups-1
+      author: kpagan
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_duplicate_groups
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: sha256
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: perceptual_hash
+                  type: BIGINT
+            tableName: duplicate_groups
+  - changeSet:
+      id: create-table-duplicate_groups-2
+      author: kpagan
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: perceptual_hash
+            indexName: idx_group_perceptual_hash
+            tableName: duplicate_groups
+  - changeSet:
+      id: create-table-duplicate_groups-3
+      author: kpagan
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addUniqueConstraint:
+            columnNames: sha256
+            constraintName: uq_group_sha256
+            tableName: duplicate_groups
+

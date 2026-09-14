@@ -38,6 +38,8 @@ databaseChangeLog:
                   name: sha256
                   type: VARCHAR(255)
               - column:
+                  constraints:
+                    nullable: false
                   name: perceptual_hash
                   type: BIGINT
               - column:
@@ -83,7 +85,7 @@ databaseChangeLog:
             columns:
               - column:
                   name: perceptual_hash
-            indexName: idx_perceptual_hash
+            indexName: idx_photos_perceptual_hash
             tableName: photos
   - changeSet:
       id: create-table-photos-4
@@ -94,6 +96,6 @@ databaseChangeLog:
             columns:
               - column:
                   name: sha256
-            indexName: idx_sha256
+            indexName: idx_photos_sha256
             tableName: photos
 
