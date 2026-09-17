@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
 @Service
@@ -35,6 +36,7 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
     private final ExecutorService workerPool;
     private final ThumbnailService thumbnailService;
     private final FileWalker fileWalker;
+    private final ReentrantLock scanLock;
 
     public ImageProcessingServiceImpl(ImageDatabaseService databaseService,
                                       ThumbnailService thumbnailService,
@@ -48,47 +50,57 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
         this.dbExecutor = Executors.newSingleThreadExecutor();
         // Bounded queue to prevent out-of-memory issues if hashing is faster than DB writes
         this.queue = new LinkedBlockingQueue<>(QUEUE_CAPACITY);
+        this.scanLock = new ReentrantLock();
     }
 
 
     @Override
     public void scanImagesUnder(String directory) throws IOException {
-        // 1. Start the single-threaded DB Consumer
-        Future<?> dbTask = dbExecutor.submit(() -> runDbConsumer(queue));
+        if (!scanLock.tryLock()) {
+            log.warn("Scan already in progress. Skipping request for directory: {}", directory);
+            return;
+        }
 
-        try (Stream<Path> paths = fileWalker.traverseDirectory(directory)) {
-            // Counter to track total tasks submitted vs completed
-            AtomicLong submittedTasks = new AtomicLong(0);
-            // 2. Phaser starts with 1 registered party (the main thread)
-            Phaser phaser = new Phaser(1);
-            // Submit tasks lazily one-by-one as the stream reads from OS
-            paths.forEach(path -> {
-                submittedTasks.incrementAndGet();
+        try {
+            // 1. Start the single-threaded DB Consumer
+            Future<?> dbTask = dbExecutor.submit(() -> runDbConsumer(queue));
 
-                // Register this photo as an active unit of work
-                phaser.register();
+            try (Stream<Path> paths = fileWalker.traverseDirectory(directory)) {
+                // Counter to track total tasks submitted vs completed
+                AtomicLong submittedTasks = new AtomicLong(0);
+                // 2. Phaser starts with 1 registered party (the main thread)
+                Phaser phaser = new Phaser(1);
+                // Submit tasks lazily one-by-one as the stream reads from OS
+                paths.forEach(path -> {
+                    submittedTasks.incrementAndGet();
 
-                workerPool.submit(() -> {
-                    try {
-                        producePhotoData(path, queue);
-                    } finally {
-                        // Deregister this task when completed (even if an exception occurred)
-                        phaser.arriveAndDeregister();
-                    }
+                    // Register this photo as an active unit of work
+                    phaser.register();
+
+                    workerPool.submit(() -> {
+                        try {
+                            producePhotoData(path, queue);
+                        } finally {
+                            // Deregister this task when completed (even if an exception occurred)
+                            phaser.arriveAndDeregister();
+                        }
+                    });
                 });
-            });
 
-            log.info("Discovered {} photos. Waiting for processing and storing to DB to finish...", +submittedTasks.get());
+                log.info("Discovered {} photos. Waiting for processing and storing to DB to finish...", +submittedTasks.get());
 
-            // 2. Main thread arrives AND blocks until all worker parties hit 0
-            phaser.arriveAndAwaitAdvance();
+                // 2. Main thread arrives AND blocks until all worker parties hit 0
+                phaser.arriveAndAwaitAdvance();
 
-            // Guaranteed: Every single photo worker has completed!
-            queue.put(NO_MORE_IMAGES);
+                // Guaranteed: Every single photo worker has completed!
+                queue.put(NO_MORE_IMAGES);
 
-            dbTask.get();
-        } catch (ExecutionException | InterruptedException e) {
-            log.error("Error while processing folder {}", directory, e);
+                dbTask.get();
+            } catch (ExecutionException | InterruptedException e) {
+                log.error("Error while processing folder {}", directory, e);
+            }
+        } finally {
+            scanLock.unlock();
         }
     }
 
@@ -106,6 +118,7 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
         HashInformation hash = HashGenerator.getHashInformation(path);
         ImageMetadata imageMetadata = MetadataExtractor.extractMetadata(path);
         log.debug("Metadata {}", imageMetadata);
+        // TODO: thumbnail will be created even if photo is already in db
         Path thumbnailPath = thumbnailService.generateThumbnail(path.toAbsolutePath());
         return new ImageModel(imageMetadata, hash, thumbnailPath.toString());
     }

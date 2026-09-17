@@ -77,9 +77,9 @@ public class ImageDatabaseServiceImpl implements ImageDatabaseService {
                 for (Long exactId : exactMatchesIds) {
                     duplicates.add(DuplicateGroupMappingsEntity.create(newGroup.getId(), exactId, true));
                 }
+                // near duplicate will always be an exact match so there is no reason to add it again
+                nearDuplicatesIds.removeAll(exactMatchesIds);
             }
-            // near duplicate will always be an exact match so there is no reason to add it again
-            nearDuplicatesIds.removeAll(exactMatchesIds);
             if (hasMoreThanOneNearDuplicates && !nearDuplicatesIds.isEmpty()) {
                 for (Long nearDuplicateId : nearDuplicatesIds) {
                     duplicates.add(DuplicateGroupMappingsEntity.create(newGroup.getId(), nearDuplicateId, false));
