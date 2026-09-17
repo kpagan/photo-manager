@@ -23,6 +23,8 @@ databaseChangeLog:
               - column:
                   name: exact_match
                   type: BOOLEAN
+                  constraints:
+                    nullable: false
             tableName: duplicate_group_mappings
   - changeSet:
       id: create-table-duplicate_group_mappings-2
@@ -48,12 +50,3 @@ databaseChangeLog:
             referencedTableName: photos
             referencedColumnNames: id
             onDelete: CASCADE
-  - changeSet:
-      id: create-table-duplicate_group_mappings-4
-      author: kpagan
-      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
-      changes:
-        - addUniqueConstraint:
-            columnNames: photo_id
-            constraintName: uc_duplicate_group_mappings_photo
-            tableName: duplicate_group_mappings

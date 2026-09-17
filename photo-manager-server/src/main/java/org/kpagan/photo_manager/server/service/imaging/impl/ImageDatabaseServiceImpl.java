@@ -65,20 +65,22 @@ public class ImageDatabaseServiceImpl implements ImageDatabaseService {
         List<ImageEntity> nearDuplicates = imageRepository.findByHammingDistance(imageEntity.getPerceptualHash(), MAX_DISTANCE);
         Set<Long> nearDuplicatesIds = nearDuplicates.stream().map(ImageEntity::getId).collect(Collectors.toCollection(TreeSet::new));
 
-        if (hasMoreThanOne(exactMatchesIds) || hasMoreThanOne(nearDuplicatesIds)) {
+        boolean hasMoreThanOneExactMatches = hasMoreThanOne(exactMatchesIds);
+        boolean hasMoreThanOneNearDuplicates = hasMoreThanOne(nearDuplicatesIds);
+        if (hasMoreThanOneExactMatches || hasMoreThanOneNearDuplicates) {
             // Create new Duplicates group
             DuplicateImageGroupEntity newGroup = createAndSaveDuplicateImageGroup(imageEntity);
 
             List<DuplicateGroupMappingsEntity> duplicates = new ArrayList<>(exactMatchesIds.size() + nearDuplicatesIds.size());
 
-            if (!exactMatchesIds.isEmpty()) {
+            if (hasMoreThanOneExactMatches) {
                 for (Long exactId : exactMatchesIds) {
                     duplicates.add(DuplicateGroupMappingsEntity.create(newGroup.getId(), exactId, true));
                 }
             }
             // near duplicate will always be an exact match so there is no reason to add it again
             nearDuplicatesIds.removeAll(exactMatchesIds);
-            if (!nearDuplicatesIds.isEmpty()) {
+            if (hasMoreThanOneNearDuplicates && !nearDuplicatesIds.isEmpty()) {
                 for (Long nearDuplicateId : nearDuplicatesIds) {
                     duplicates.add(DuplicateGroupMappingsEntity.create(newGroup.getId(), nearDuplicateId, false));
                 }

@@ -130,7 +130,11 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
                     break; // Exit loop cleanly
                 }
                 // Execute DB transaction sequentially on a single thread—zero locking issues!
-                databaseService.processAndSave(item);
+                try {
+                    databaseService.processAndSave(item);
+                } catch (Exception e) {
+                    log.error("Error while processing image {}. Skipping...", item.metadata().absolutePath(), e);
+                }
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
