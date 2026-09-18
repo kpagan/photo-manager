@@ -2,6 +2,7 @@ package org.kpagan.photo_manager.server.service.scan.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.kpagan.photo_manager.server.service.imaging.ImageProcessingService;
+import org.kpagan.photo_manager.server.service.imaging.ScanResponseModel;
 import org.kpagan.photo_manager.server.service.scan.ScanFolderService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
@@ -44,5 +45,10 @@ public class ScanFolderServiceImpl implements ScanFolderService {
         } catch (Exception e) {
             log.error("Failure scanning folder {}", scanDirectory, e);
         }
+    }
+
+    @Override
+    public ScanResponseModel getScanStatus() {
+        return imageProcessingService.getScanningStatus();
     }
 }

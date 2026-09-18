@@ -9,15 +9,23 @@ import org.kpagan.photo_manager.server.image.ImageMetadata;
 import org.kpagan.photo_manager.server.image.ImageModel;
 import org.kpagan.photo_manager.server.image.MetadataExtractor;
 import org.kpagan.photo_manager.server.image.error.ImageMetadataExtractionException;
+import org.kpagan.photo_manager.server.io.FileWalker;
 import org.kpagan.photo_manager.server.service.imaging.ImageDatabaseService;
 import org.kpagan.photo_manager.server.service.imaging.ImageProcessingService;
-import org.kpagan.photo_manager.server.io.FileWalker;
+import org.kpagan.photo_manager.server.service.imaging.ScanResponseModel;
 import org.kpagan.photo_manager.server.service.imaging.ThumbnailService;
+import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Phaser;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
@@ -37,6 +45,7 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
     private final ThumbnailService thumbnailService;
     private final FileWalker fileWalker;
     private final ReentrantLock scanLock;
+    private final AtomicLong photosToBeProcessed;
 
     public ImageProcessingServiceImpl(ImageDatabaseService databaseService,
                                       ThumbnailService thumbnailService,
@@ -45,20 +54,19 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
         this.thumbnailService = thumbnailService;
         this.fileWalker = fileWalker;
         int cpuCores = Runtime.getRuntime().availableProcessors();
-        this.workerPool = Executors.newFixedThreadPool(cpuCores);
+        this.workerPool = Executors.newFixedThreadPool(cpuCores, new CustomizableThreadFactory("scan-producer"));
         // Single-Threaded Executor strictly dedicated to Database Writes/Queries
-        this.dbExecutor = Executors.newSingleThreadExecutor();
+        this.dbExecutor = Executors.newSingleThreadExecutor(new CustomizableThreadFactory("scan-consumer"));
         // Bounded queue to prevent out-of-memory issues if hashing is faster than DB writes
         this.queue = new LinkedBlockingQueue<>(QUEUE_CAPACITY);
         this.scanLock = new ReentrantLock();
+        photosToBeProcessed = new AtomicLong(0L);
     }
-
 
     @Override
     public void scanImagesUnder(String directory) throws IOException {
         if (!scanLock.tryLock()) {
             log.warn("Scan already in progress. Skipping request for directory: {}", directory);
-            return;
         }
 
         try {
@@ -88,6 +96,7 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
                 });
 
                 log.info("Discovered {} photos. Waiting for processing and storing to DB to finish...", +submittedTasks.get());
+                photosToBeProcessed.set(submittedTasks.get());
 
                 // 2. Main thread arrives AND blocks until all worker parties hit 0
                 phaser.arriveAndAwaitAdvance();
@@ -101,6 +110,7 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
             }
         } finally {
             scanLock.unlock();
+            photosToBeProcessed.set(0L);
         }
     }
 
@@ -111,6 +121,11 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
         } catch (ImageMetadataExtractionException | HashingException e) {
             log.error("Skipping processing file {} due to error", path, e);
         }
+    }
+
+    @Override
+    public ScanResponseModel getScanningStatus() {
+        return new ScanResponseModel(scanLock.isLocked(), photosToBeProcessed.get());
     }
 
     private ImageModel generateThumbnailAndImageModel(Path path) throws HashingException, ImageMetadataExtractionException {
@@ -144,7 +159,9 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
                 }
                 // Execute DB transaction sequentially on a single thread—zero locking issues!
                 try {
+                    log.info("Saving in database photo {}", item.metadata().absolutePath());
                     databaseService.processAndSave(item);
+                    photosToBeProcessed.decrementAndGet();
                 } catch (Exception e) {
                     log.error("Error while processing image {}. Skipping...", item.metadata().absolutePath(), e);
                 }

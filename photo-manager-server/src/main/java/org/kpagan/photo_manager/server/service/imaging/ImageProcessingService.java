@@ -8,4 +8,6 @@ public interface ImageProcessingService {
     void scanImagesUnder(String directory) throws IOException;
 
     void processImage(Path path);
+
+    ScanResponseModel getScanningStatus();
 }
