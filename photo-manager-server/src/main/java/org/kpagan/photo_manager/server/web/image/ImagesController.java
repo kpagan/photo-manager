@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.jspecify.annotations.NonNull;
 import org.kpagan.photo_manager.server.service.imaging.ImageService;
 import org.kpagan.photo_manager.server.service.imaging.StreamingResourceModel;
 import org.springframework.http.ContentDisposition;
@@ -26,7 +27,17 @@ public class ImagesController {
 
     @GetMapping(path = "image/{imageId}")
     public ResponseEntity<StreamingResponseBody> getImage(@PathVariable(value = "imageId") Long imageId) {
-        StreamingResourceModel streamingResourceModel = imageService.getImageStream(imageId);
+        StreamingResourceModel streamingResourceModel = imageService.getImageStream(imageId, false);
+        return getStreamingResponseBodyResponseEntity(streamingResourceModel);
+    }
+
+    @GetMapping(path = "image/{imageId}/thumbnail")
+    public ResponseEntity<StreamingResponseBody> getThumbnail(@PathVariable(value = "imageId") Long imageId) {
+        StreamingResourceModel streamingResourceModel = imageService.getImageStream(imageId, true);
+        return getStreamingResponseBodyResponseEntity(streamingResourceModel);
+    }
+
+    private static @NonNull ResponseEntity<StreamingResponseBody> getStreamingResponseBodyResponseEntity(StreamingResourceModel streamingResourceModel) {
         StreamingResponseBody responseBody = streamingResourceModel.streamWriter()::writeTo;
         Path path = streamingResourceModel.path();
         String filename = path.toFile().getName();

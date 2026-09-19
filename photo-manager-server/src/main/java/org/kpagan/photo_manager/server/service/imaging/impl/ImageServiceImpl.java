@@ -24,13 +24,14 @@ public class ImageServiceImpl implements ImageService {
     private final ImageRepository imageRepository;
 
     @Override
-    public StreamingResourceModel getImageStream(Long imageId) {
+    public StreamingResourceModel getImageStream(Long imageId, boolean thumbnail) {
         ImageEntity image = imageRepository.findById(imageId)
                 .orElseThrow(() -> new EntityNotFoundException("Not found image with id: " + imageId));
 
-        Path path = Paths.get(image.getAbsolutePath());
+        String pathStr = thumbnail ? image.getThumbnailPath() : image.getAbsolutePath();
+        Path path = Paths.get(pathStr);
         if (!Files.exists(path)) {
-            throw new ImageLoadException("Image file does not exist at path: " + image.getAbsolutePath());
+            throw new ImageLoadException("Image file does not exist at path: " + pathStr);
         }
 
         long filesize;
@@ -41,13 +42,13 @@ public class ImageServiceImpl implements ImageService {
         }
 
         StreamWriter streamWriter = outputStream -> {
-            try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(image.getAbsolutePath()))) {
+            try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(pathStr))) {
                 bis.transferTo(outputStream);
             } catch (IOException e) {
                 throw new ImageLoadException(
                         String.format("Error while loading image with id: %d, absolute path: %s",
                                 imageId,
-                                image.getAbsolutePath()),
+                                pathStr),
                         e);
             } finally {
                 outputStream.flush();
