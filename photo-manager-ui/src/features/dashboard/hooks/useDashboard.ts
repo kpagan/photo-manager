@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { fetchDashboardData, startFolderScan } from '../service/dashboardService';
+import { fetchDashboardData, startFolderScan, fetchScanStatus } from '../service/dashboardService';
 import { type DashboardDto } from '../model/DashboardDto';
+import type { ScanStatusDto } from '../model/ScanStatusDto';
 
 export type ScanStatus = 'idle' | 'running' | 'success' | 'error';
 
@@ -46,15 +47,37 @@ export function useDashboard() {
 
     try {
       const response = await startFolderScan();
-      setScanState('success');
       const message = await response.text();
       setScanState('running');
       setScanMessage(message || 'The folder scan job was started successfully.');
+      await pollScanStatus();
     } catch(e) {
       console.log(e);
       if (e instanceof Error) {
         setScanState('error');
         setScanMessage(`The scan request could not be sent. Check your backend connection and API URL. Error: ${e.message}`);
+      }
+    }
+  };
+
+  const pollScanStatus = async () => {
+    try {
+      const intervalId = setInterval(async () => {
+        const statusDto: ScanStatusDto = await fetchScanStatus();
+        if (statusDto.running) {
+          setScanState('running');
+          setScanMessage('Remaining photos to be added in library: ' + statusDto.numberOfPhotos);
+        } else {
+          setScanState('success');
+          setScanMessage('The folder scan job has completed successfully.');
+          clearInterval(intervalId);
+        }
+      }, 1000);
+    } catch (e) {
+      console.log(e);
+      if (e instanceof Error) {
+        setScanState('error');
+        setScanMessage(`Error while polling scan status: ${e.message}`);
       }
     }
   };

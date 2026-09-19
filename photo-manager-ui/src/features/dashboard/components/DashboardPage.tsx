@@ -65,7 +65,7 @@ function DashboardPage() {
               Press the "Start folder scan" button above to initiate a background scan of your photo library.
             </p>
             <div className={`status-box ${scanState}`}>
-              <strong>{scanState === 'success' ? 'Job started' : scanState === 'error' ? 'Request failed' : 'Awaiting scan'}</strong>
+              <strong>{scanState === 'running' ? 'Photo library is being updated...' : scanState === 'error' ? 'Request failed' : 'Awaiting scan'}</strong>
               <p>{scanMessage || 'No scan has been started yet.'}</p>
             </div>
           </article>
