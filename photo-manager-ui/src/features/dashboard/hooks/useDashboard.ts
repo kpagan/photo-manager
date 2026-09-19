@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { startFolderScan } from '../../../services/appService';
-import { fetchDashboardData } from '../service/dashboardService';
+import { fetchDashboardData, startFolderScan } from '../service/dashboardService';
 import { type DashboardDto } from '../model/DashboardDto';
 
 export type ScanStatus = 'idle' | 'running' | 'success' | 'error';
@@ -43,16 +42,20 @@ export function useDashboard() {
   }, []);
 
   const handleStartScan = async () => {
-    setScanState('running');
     setScanMessage('Starting the folder scan in the background...');
 
     try {
       const response = await startFolderScan();
       setScanState('success');
-      setScanMessage(response.message || 'The folder scan job was started successfully.');
-    } catch {
-      setScanState('error');
-      setScanMessage('The scan request could not be sent. Check your backend connection and API URL.');
+      const message = await response.text();
+      setScanState('running');
+      setScanMessage(message || 'The folder scan job was started successfully.');
+    } catch(e) {
+      console.log(e);
+      if (e instanceof Error) {
+        setScanState('error');
+        setScanMessage(`The scan request could not be sent. Check your backend connection and API URL. Error: ${e.message}`);
+      }
     }
   };
 

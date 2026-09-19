@@ -22,7 +22,7 @@ function DashboardPage() {
             </p>
           </div>
           <button type="button" className="scan-button" onClick={handleStartScan} disabled={scanState === 'running'}>
-            {scanState === 'running' ? 'Starting scan...' : 'Start folder scan'}
+            {scanState === 'running' ? 'Scan is running...' : 'Start folder scan'}
           </button>
         </section>
 
@@ -62,7 +62,7 @@ function DashboardPage() {
           <article className="card">
             <h3>Background job</h3>
             <p className="helper-text">
-              The button above will call a Spring Boot endpoint such as /api/folder-scan/start.
+              Press the "Start folder scan" button above to initiate a background scan of your photo library.
             </p>
             <div className={`status-box ${scanState}`}>
               <strong>{scanState === 'success' ? 'Job started' : scanState === 'error' ? 'Request failed' : 'Awaiting scan'}</strong>
