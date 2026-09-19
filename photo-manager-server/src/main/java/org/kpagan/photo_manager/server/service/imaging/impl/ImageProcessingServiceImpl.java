@@ -67,8 +67,10 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
     public void scanImagesUnder(String directory) throws IOException {
         if (!scanLock.tryLock()) {
             log.warn("Scan already in progress. Skipping request for directory: {}", directory);
+            return;
         }
 
+        log.info("Started importing photos into the library");
         try {
             // 1. Start the single-threaded DB Consumer
             Future<?> dbTask = dbExecutor.submit(() -> runDbConsumer(queue));
@@ -109,8 +111,8 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
                 log.error("Error while processing folder {}", directory, e);
             }
         } finally {
-            scanLock.unlock();
             photosToBeProcessed.set(0L);
+            scanLock.unlock();
         }
     }
 
@@ -129,7 +131,7 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
     }
 
     private ImageModel generateThumbnailAndImageModel(Path path) throws HashingException, ImageMetadataExtractionException, IOException {
-        log.info("Processing image: {}", path.toString());
+        log.debug("Processing image: {}", path.toString());
         HashInformation hash = HashGenerator.getHashInformation(path);
         ImageMetadata imageMetadata = MetadataExtractor.extractMetadata(path);
         log.debug("Metadata {}", imageMetadata);
@@ -158,7 +160,7 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
                 }
                 // Execute DB transaction sequentially on a single thread—zero locking issues!
                 try {
-                    log.info("Saving in database photo {}", item.metadata().absolutePath());
+                    log.debug("Saving in database photo {}", item.metadata().absolutePath());
                     databaseService.processAndSave(item);
                     photosToBeProcessed.decrementAndGet();
                 } catch (Exception e) {

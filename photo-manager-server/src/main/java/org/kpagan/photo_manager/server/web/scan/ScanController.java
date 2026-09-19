@@ -18,9 +18,9 @@ public class ScanController {
     private final ScanDtoMapper mapper;
 
     @PostMapping(path = "/scan")
-    public ResponseEntity<ScanDto> scanFolder() {
+    public ResponseEntity<String> scanFolder() {
         scanFolderService.scan();
-        return ResponseEntity.accepted().body(new ScanDto(true, 123213L));
+        return ResponseEntity.accepted().body("Initiated folder scanning...");
     }
 
     @GetMapping(path = "/scanStatus")
