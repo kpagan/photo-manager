@@ -1,6 +1,7 @@
 package org.kpagan.photo_manager.server.hashing;
 
 import lombok.experimental.UtilityClass;
+import org.jspecify.annotations.NonNull;
 import org.kpagan.photo_manager.server.hashing.error.HashingException;
 
 import javax.imageio.ImageIO;
@@ -37,13 +38,7 @@ public final class HashGenerator {
         }
 
         byte[] hashBytes = digest.digest();
-        StringBuilder hexString = new StringBuilder();
-        for (byte b : hashBytes) {
-            String hex = Integer.toHexString(0xff & b);
-            if (hex.length() == 1) hexString.append('0');
-            hexString.append(hex);
-        }
-        return hexString.toString();
+        return getHexString(hashBytes);
     }
 
     /**
@@ -76,6 +71,26 @@ public final class HashGenerator {
             }
         }
         return hash;
+    }
+
+    public static String calculateSHA256(String str) throws HashingException {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update(str.getBytes());
+            return getHexString(digest.digest());
+        } catch (NoSuchAlgorithmException e) {
+            throw new HashingException(String.format("Error while calculating hash on %s", str), e);
+        }
+    }
+
+    private static @NonNull String getHexString(byte[] hashBytes) {
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : hashBytes) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) hexString.append('0');
+            hexString.append(hex);
+        }
+        return hexString.toString();
     }
 
     /**

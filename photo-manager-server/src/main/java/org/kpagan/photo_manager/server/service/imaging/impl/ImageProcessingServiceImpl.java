@@ -118,7 +118,7 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
     public void processImage(Path path) {
         try {
             databaseService.processAndSave(generateThumbnailAndImageModel(path));
-        } catch (ImageMetadataExtractionException | HashingException e) {
+        } catch (ImageMetadataExtractionException | HashingException | IOException e) {
             log.error("Skipping processing file {} due to error", path, e);
         }
     }
@@ -128,12 +128,11 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
         return new ScanResponseModel(scanLock.isLocked(), photosToBeProcessed.get());
     }
 
-    private ImageModel generateThumbnailAndImageModel(Path path) throws HashingException, ImageMetadataExtractionException {
+    private ImageModel generateThumbnailAndImageModel(Path path) throws HashingException, ImageMetadataExtractionException, IOException {
         log.info("Processing image: {}", path.toString());
         HashInformation hash = HashGenerator.getHashInformation(path);
         ImageMetadata imageMetadata = MetadataExtractor.extractMetadata(path);
         log.debug("Metadata {}", imageMetadata);
-        // TODO: thumbnail will be created even if photo is already in db
         Path thumbnailPath = thumbnailService.generateThumbnail(path.toAbsolutePath());
         return new ImageModel(imageMetadata, hash, thumbnailPath.toString());
     }
