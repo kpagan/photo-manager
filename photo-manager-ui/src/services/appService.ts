@@ -24,12 +24,3 @@ export async function request(path: string, init?: RequestInit): Promise<Respons
   }
   return response;
 }
-
-export async function getImage(imageId: number): Promise<string> {
-  const response = await fetch(`${DEFAULT_CONTEXT_PATH}/image/${imageId}`, {
-    method: 'GET',
-    cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-  });
-  const blob = await response.blob()
-  return URL.createObjectURL(blob);
-}

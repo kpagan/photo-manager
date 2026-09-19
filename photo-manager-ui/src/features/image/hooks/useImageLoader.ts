@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { getImage } from '../../../services/appService';
+import { getImage } from '../service/imageService';
 
-export function useImageLoader(imageId: number) {
+export function useImageLoader(imageId: number, thumbnail: boolean) {
     const [loading, setLoading] = useState<boolean>(true);
     const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
     const [error, setError] = useState<string | null>(null);
@@ -10,7 +10,7 @@ export function useImageLoader(imageId: number) {
         let isMounted = true;
         const loadImage = async () => {
             try {
-                const response = await getImage(imageId);
+                const response = await getImage(imageId, thumbnail);
                 if (isMounted) {
                     setImageUrl(response);
                     setError(null);
@@ -32,7 +32,7 @@ export function useImageLoader(imageId: number) {
         return () => {
             isMounted = false;
         };
-    }, [imageId]);
+    }, [imageId, thumbnail]);
 
     return {
         imageUrl,

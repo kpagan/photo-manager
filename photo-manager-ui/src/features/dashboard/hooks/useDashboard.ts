@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { fetchDashboardData, startFolderScan, fetchScanStatus } from '../service/dashboardService';
 import { type DashboardDto } from '../model/DashboardDto';
 import type { ScanStatusDto } from '../model/ScanStatusDto';
@@ -11,6 +11,7 @@ export function useDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [scanState, setScanState] = useState<ScanStatus>('idle');
   const [scanMessage, setScanMessage] = useState('');
+  const intervalId = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     let isMounted = true;
@@ -39,6 +40,9 @@ export function useDashboard() {
 
     return () => {
       isMounted = false;
+      if (intervalId.current !== undefined) {
+        clearInterval(intervalId.current);
+      }
     };
   }, []);
 
@@ -61,9 +65,8 @@ export function useDashboard() {
   };
 
   const pollScanStatus = async () => {
-    let intervalId : number | undefined = undefined;
     try {
-      intervalId = setInterval(async () => {
+      intervalId.current = window.setInterval(async () => {
         const statusDto: ScanStatusDto = await fetchScanStatus();
         if (statusDto.running) {
           setScanState('running');
@@ -71,13 +74,15 @@ export function useDashboard() {
         } else {
           setScanState('success');
           setScanMessage('The folder scan job has completed successfully.');
-          clearInterval(intervalId);
+          clearInterval(intervalId.current);
+          intervalId.current = undefined;
         }
       }, 1000);
     } catch (e) {
       console.log(e);
-      if (intervalId !== undefined) {
-        clearInterval(intervalId);
+      if (intervalId.current !== undefined) {
+        clearInterval(intervalId.current);
+        intervalId.current = undefined;
       }
       if (e instanceof Error) {
         setScanState('error');

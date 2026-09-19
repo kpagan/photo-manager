@@ -1,7 +1,7 @@
 import { useImageLoader } from '../hooks/useImageLoader';
 
-function ImageContainer({ imageId }: { imageId: number }) {
-    const {imageUrl, loading, error} = useImageLoader(imageId);
+function ImageContainer({ imageId, thumbnail }: { imageId: number; thumbnail: boolean }) {
+    const {imageUrl, loading, error} = useImageLoader(imageId, thumbnail);
 
     return (
         <div className="image-container">

@@ -65,7 +65,7 @@ function DuplicatesPage() {
                             {photo.exactMatch !== undefined && (
                               <div>Exact match: {photo.exactMatch ? 'Yes' : 'No'}</div>
                             )}
-                            <ImageContainer imageId={photo.id} />
+                            <ImageContainer imageId={photo.id} thumbnail={true} />
                           </div>
                         ))}
                       </div>
