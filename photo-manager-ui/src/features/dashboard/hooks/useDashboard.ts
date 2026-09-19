@@ -61,8 +61,9 @@ export function useDashboard() {
   };
 
   const pollScanStatus = async () => {
+    let intervalId : number | undefined = undefined;
     try {
-      const intervalId = setInterval(async () => {
+      intervalId = setInterval(async () => {
         const statusDto: ScanStatusDto = await fetchScanStatus();
         if (statusDto.running) {
           setScanState('running');
@@ -75,6 +76,9 @@ export function useDashboard() {
       }, 1000);
     } catch (e) {
       console.log(e);
+      if (intervalId !== undefined) {
+        clearInterval(intervalId);
+      }
       if (e instanceof Error) {
         setScanState('error');
         setScanMessage(`Error while polling scan status: ${e.message}`);
